@@ -56,23 +56,24 @@ function AppContent() {
     setTranscribeError(null);
 
     try {
-      // Read the video file as raw bytes
-      const fileUriResponse = await fetch(
-        path.startsWith('file://') ? path : `file://${path}`
-      );
-      const videoBlob = await fileUriResponse.blob();
+      const fileUri = path.startsWith('file://') ? path : `file://${path}`;
+
+      const formData = new FormData();
+      formData.append('file', {
+        uri: fileUri,
+        type: 'video/mp4',
+        name: 'video.mp4',
+      } as any);
 
       const backendResponse = await fetch(BACKEND_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'video/mp4',
-        },
-        body: videoBlob,
+        body: formData,
       });
 
       const result = await backendResponse.json();
 
       if (result.error) {
+        console.log('Backend error:', result.error, result.details);
         setTranscribeError(
           'Could not generate captions automatically. You can type them in manually.'
         );
