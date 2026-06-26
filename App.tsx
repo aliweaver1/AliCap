@@ -47,7 +47,7 @@ function AppContent() {
 
   return (
     <View style={styles.content}>
-      <Text style={styles.title}>CaptionApp</Text>
+      <Text style={styles.title}>AliCaps</Text>
 
       {videoPath ? (
         <View style={styles.previewContainer}>
