@@ -37,7 +37,8 @@ function App() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} 
+/>
       <AppContent />
     </SafeAreaView>
   );
@@ -47,16 +48,17 @@ function AppContent() {
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [captionText, setCaptionText] = useState<string>('');
   const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
-  const [showCaptionInput, setShowCaptionInput] = useState<boolean>(false);
+  const [showCaptionInput, setShowCaptionInput] = 
+useState<boolean>(false);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
-  const [transcribeError, setTranscribeError] = useState<string | null>(null);
+  const [transcribeError, setTranscribeError] = useState<string | 
+null>(null);
 
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
 
     try {
-      // Read the video file as raw bytes
       const fileUriResponse = await fetch(
         path.startsWith('file://') ? path : `file://${path}`
       );
@@ -74,7 +76,8 @@ function AppContent() {
 
       if (result.error) {
         setTranscribeError(
-          'Could not generate captions automatically. You can type them in manually.'
+          'Could not generate captions automatically. You can type them in 
+manually.'
         );
       } else {
         setCaptionText(result.transcript || '');
@@ -83,7 +86,8 @@ function AppContent() {
     } catch (error) {
       console.log('Transcription failed:', error);
       setTranscribeError(
-        'Could not generate captions automatically. You can type them in manually.'
+        'Could not generate captions automatically. You can type them in 
+manually.'
       );
     } finally {
       setIsTranscribing(false);
@@ -125,7 +129,8 @@ function AppContent() {
             />
 
             <TouchableOpacity style={styles.button} onPress={pickVideo}>
-              <Text style={styles.buttonText}>Choose a different video</Text>
+              <Text style={styles.buttonText}>Choose a different 
+video</Text>
             </TouchableOpacity>
 
             {isTranscribing && (
@@ -149,7 +154,8 @@ function AppContent() {
                 onPress={() => setShowCaptionInput(true)}
               >
                 <Text style={styles.buttonText}>
-                  {captionText ? 'Edit Captions' : 'Add Captions Manually'}
+                  {captionText ? 'Edit Captions' : 'Add Captions 
+Manually'}
                 </Text>
               </TouchableOpacity>
             )}
@@ -178,12 +184,14 @@ function AppContent() {
               </View>
             )}
 
-            {!showCaptionInput && !isTranscribing && captionText.length > 0 && (
+            {!showCaptionInput && !isTranscribing && captionText.length > 
+0 && (
               <View style={styles.captionPreviewBox}>
                 <Text style={styles.captionPreviewLabel}>
                   Caption preview ({wordTimings.length} words timed):
                 </Text>
-                <Text style={styles.captionPreviewText}>{captionText}</Text>
+                <Text 
+style={styles.captionPreviewText}>{captionText}</Text>
               </View>
             )}
           </View>
@@ -314,3 +322,4 @@ const styles = StyleSheet.create({
 });
 
 export default App;
+
