@@ -50,10 +50,12 @@ function AppContent() {
   const [showCaptionInput, setShowCaptionInput] = useState<boolean>(false);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<string>('');
 
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
+    setDebugInfo('Path: ' + path);
 
     try {
       const fileUri = path.startsWith('file://') ? path : `file://${path}`;
@@ -65,24 +67,31 @@ function AppContent() {
         name: 'video.mp4',
       } as any);
 
+      setDebugInfo('Sending to: ' + BACKEND_URL + ' | uri: ' + fileUri);
+
       const backendResponse = await fetch(BACKEND_URL, {
         method: 'POST',
         body: formData,
       });
 
+      setDebugInfo(d => d + ' | status: ' + backendResponse.status);
+
       const result = await backendResponse.json();
 
       if (result.error) {
-        console.log('Backend error:', result.error, result.details);
+        setDebugInfo(
+          d => d + ' | backend error: ' + JSON.stringify(result)
+        );
         setTranscribeError(
           'Could not generate captions automatically. You can type them in manually.'
         );
       } else {
         setCaptionText(result.transcript || '');
         setWordTimings(result.words || []);
+        setDebugInfo(d => d + ' | SUCCESS, words: ' + (result.words || []).length);
       }
-    } catch (error) {
-      console.log('Transcription failed:', error);
+    } catch (error: any) {
+      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error));
       setTranscribeError(
         'Could not generate captions automatically. You can type them in manually.'
       );
@@ -141,6 +150,12 @@ function AppContent() {
             {!isTranscribing && transcribeError && (
               <View style={styles.errorBox}>
                 <Text style={styles.errorText}>{transcribeError}</Text>
+              </View>
+            )}
+
+            {debugInfo.length > 0 && (
+              <View style={styles.debugBox}>
+                <Text style={styles.debugText}>{debugInfo}</Text>
               </View>
             )}
 
@@ -272,6 +287,18 @@ const styles = StyleSheet.create({
   errorText: {
     color: '#FFB4A2',
     fontSize: 13,
+  },
+  debugBox: {
+    width: '100%',
+    marginTop: 12,
+    backgroundColor: '#2A2A2A',
+    borderRadius: 8,
+    padding: 10,
+  },
+  debugText: {
+    color: '#88FF88',
+    fontSize: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
   captionInputContainer: {
     width: '100%',
