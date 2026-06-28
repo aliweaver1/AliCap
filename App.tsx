@@ -22,7 +22,13 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import { uploadFiles } from '@dr.pogodin/react-native-fs';
+import {
+  readFile,
+  copyFile,
+  exists,
+  unlink,
+  DocumentDirectoryPath,
+} from '@dr.pogodin/react-native-fs';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 
@@ -56,52 +62,64 @@ function AppContent() {
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
-    setDebugInfo('Uploading file: ' + path);
+    setDebugInfo('Start: ' + path);
+
+    const stableCopyPath = DocumentDirectoryPath + '/alicaps_upload.mp4';
 
     try {
       const cleanPath = path.startsWith('file://')
         ? path.replace('file://', '')
         : path;
 
-      const result = await uploadFiles({
-        toUrl: BACKEND_URL,
-        binaryStreamOnly: true,
-        files: [
-          {
-            name: 'file',
-            filename: 'video.mp4',
-            filepath: cleanPath,
-            filetype: 'video/mp4',
-          },
-        ],
-        method: 'POST',
-      }).promise;
+      // Remove any old copy first
+      const alreadyExists = await exists(stableCopyPath);
+      if (alreadyExists) {
+        await unlink(stableCopyPath);
+      }
+
+      // Copy the picked video into a stable Documents location
+      await copyFile(cleanPath, stableCopyPath);
+
+      setDebugInfo(d => d + ' | copied to Documents');
+
+      const base64Data = await readFile(stableCopyPath, 'base64');
 
       setDebugInfo(
-        d => d + ' | upload status: ' + result.statusCode + ' | bodyLen: ' + (result.body ? result.body.length : 'none')
+        d => d + ' | read ' + base64Data.length + ' base64 chars'
       );
 
-      const parsed = JSON.parse(result.body);
+      const backendResponse = await fetch(BACKEND_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'text/plain',
+        },
+        body: base64Data,
+      });
 
-      if (parsed.error) {
+      setDebugInfo(d => d + ' | fetch returned, status: ' + backendResponse.status);
+
+      const responseText = await backendResponse.text();
+
+      setDebugInfo(d => d + ' | responseTextLen: ' + responseText.length);
+
+      const result = JSON.parse(responseText);
+
+      if (result.error) {
         setDebugInfo(
-          d => d + ' | backend error: ' + JSON.stringify(parsed)
+          d => d + ' | backend error: ' + JSON.stringify(result)
         );
         setTranscribeError(
           'Could not generate captions automatically. You can type them in manually.'
         );
       } else {
-        setCaptionText(parsed.transcript || '');
-        setWordTimings(parsed.words || []);
+        setCaptionText(result.transcript || '');
+        setWordTimings(result.words || []);
         setDebugInfo(
-          d => d + ' | SUCCESS, words: ' + (parsed.words || []).length
+          d => d + ' | SUCCESS, words: ' + (result.words || []).length
         );
       }
     } catch (error: any) {
-      const resultInfo = error?.result
-        ? ' | errResult: status=' + error.result.statusCode + ' body=' + error.result.body
-        : ' | no error.result';
-      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error) + resultInfo);
+      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error));
       setTranscribeError(
         'Could not generate captions automatically. You can type them in manually.'
       );
