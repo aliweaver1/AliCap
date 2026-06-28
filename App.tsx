@@ -22,6 +22,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
+import RNFS from '@dr.pogodin/react-native-fs';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 
@@ -55,23 +56,25 @@ function AppContent() {
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
-    setDebugInfo('Path: ' + path);
+    setDebugInfo('Reading file: ' + path);
 
     try {
-      const fileUri = path.startsWith('file://') ? path : `file://${path}`;
+      const cleanPath = path.startsWith('file://')
+        ? path.replace('file://', '')
+        : path;
 
-      const formData = new FormData();
-      formData.append('file', {
-        uri: fileUri,
-        type: 'video/mp4',
-        name: 'video.mp4',
-      } as any);
+      const base64Data = await RNFS.readFile(cleanPath, 'base64');
 
-      setDebugInfo('Sending to: ' + BACKEND_URL + ' | uri: ' + fileUri);
+      setDebugInfo(
+        d => d + ' | Read ' + base64Data.length + ' base64 chars'
+      );
 
       const backendResponse = await fetch(BACKEND_URL, {
         method: 'POST',
-        body: formData,
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ base64: base64Data }),
       });
 
       setDebugInfo(d => d + ' | status: ' + backendResponse.status);
@@ -88,7 +91,9 @@ function AppContent() {
       } else {
         setCaptionText(result.transcript || '');
         setWordTimings(result.words || []);
-        setDebugInfo(d => d + ' | SUCCESS, words: ' + (result.words || []).length);
+        setDebugInfo(
+          d => d + ' | SUCCESS, words: ' + (result.words || []).length
+        );
       }
     } catch (error: any) {
       setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error));
