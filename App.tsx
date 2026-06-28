@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import { readFile } from '@dr.pogodin/react-native-fs';
+import { uploadFiles } from '@dr.pogodin/react-native-fs';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 
@@ -56,43 +56,44 @@ function AppContent() {
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
-    setDebugInfo('Reading file: ' + path);
+    setDebugInfo('Uploading file: ' + path);
 
     try {
       const cleanPath = path.startsWith('file://')
         ? path.replace('file://', '')
         : path;
 
-      const base64Data = await readFile(cleanPath, 'base64');
+      const result = await uploadFiles({
+        toUrl: BACKEND_URL,
+        files: [
+          {
+            name: 'file',
+            filename: 'video.mp4',
+            filepath: cleanPath,
+            filetype: 'video/mp4',
+          },
+        ],
+        method: 'POST',
+      }).promise;
 
       setDebugInfo(
-        d => d + ' | Read ' + base64Data.length + ' base64 chars'
+        d => d + ' | upload status: ' + result.statusCode
       );
 
-      const backendResponse = await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: base64Data,
-      });
+      const parsed = JSON.parse(result.body);
 
-      setDebugInfo(d => d + ' | status: ' + backendResponse.status);
-
-      const result = await backendResponse.json();
-
-      if (result.error) {
+      if (parsed.error) {
         setDebugInfo(
-          d => d + ' | backend error: ' + JSON.stringify(result)
+          d => d + ' | backend error: ' + JSON.stringify(parsed)
         );
         setTranscribeError(
           'Could not generate captions automatically. You can type them in manually.'
         );
       } else {
-        setCaptionText(result.transcript || '');
-        setWordTimings(result.words || []);
+        setCaptionText(parsed.transcript || '');
+        setWordTimings(parsed.words || []);
         setDebugInfo(
-          d => d + ' | SUCCESS, words: ' + (result.words || []).length
+          d => d + ' | SUCCESS, words: ' + (parsed.words || []).length
         );
       }
     } catch (error: any) {
