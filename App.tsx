@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import RNFS from '@dr.pogodin/react-native-fs';
+import { readFile } from '@dr.pogodin/react-native-fs';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 
@@ -63,7 +63,7 @@ function AppContent() {
         ? path.replace('file://', '')
         : path;
 
-      const base64Data = await RNFS.readFile(cleanPath, 'base64');
+      const base64Data = await readFile(cleanPath, 'base64');
 
       setDebugInfo(
         d => d + ' | Read ' + base64Data.length + ' base64 chars'
