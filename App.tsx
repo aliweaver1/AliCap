@@ -72,9 +72,9 @@ function AppContent() {
       const backendResponse = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'text/plain',
         },
-        body: JSON.stringify({ base64: base64Data }),
+        body: base64Data,
       });
 
       setDebugInfo(d => d + ' | status: ' + backendResponse.status);
