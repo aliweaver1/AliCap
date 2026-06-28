@@ -65,6 +65,7 @@ function AppContent() {
 
       const result = await uploadFiles({
         toUrl: BACKEND_URL,
+        binaryStreamOnly: true,
         files: [
           {
             name: 'file',
@@ -77,7 +78,7 @@ function AppContent() {
       }).promise;
 
       setDebugInfo(
-        d => d + ' | upload status: ' + result.statusCode
+        d => d + ' | upload status: ' + result.statusCode + ' | bodyLen: ' + (result.body ? result.body.length : 'none')
       );
 
       const parsed = JSON.parse(result.body);
@@ -97,7 +98,10 @@ function AppContent() {
         );
       }
     } catch (error: any) {
-      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error));
+      const resultInfo = error?.result
+        ? ' | errResult: status=' + error.result.statusCode + ' body=' + error.result.body
+        : ' | no error.result';
+      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error) + resultInfo);
       setTranscribeError(
         'Could not generate captions automatically. You can type them in manually.'
       );
