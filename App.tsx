@@ -22,9 +22,10 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import ReactNativeBlobUtil from 'react-native-blob-util';
+import { readFile } from '@dr.pogodin/react-native-fs';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
+const CHUNK_SIZE = 250000; // ~250KB per chunk, well within reliable fetch range
 
 type WordTiming = {
   word: string;
@@ -56,33 +57,52 @@ function AppContent() {
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
-    setDebugInfo('Start: ' + path);
+    setDebugInfo('Reading file...');
 
     try {
       const cleanPath = path.startsWith('file://')
         ? path.replace('file://', '')
         : path;
 
-      setDebugInfo(d => d + ' | uploading via blob-util');
+      const base64Data = await readFile(cleanPath, 'base64');
 
-      const response = await ReactNativeBlobUtil.fetch(
-        'POST',
-        BACKEND_URL,
-        {
-          'Content-Type': 'video/mp4',
-        },
-        ReactNativeBlobUtil.wrap(cleanPath)
-      );
+      setDebugInfo(d => d + ' | read ' + base64Data.length + ' chars');
 
-      const status = response.info().status;
+      const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
+      const sessionId = 'sess_' + Date.now() + '_' + Math.floor(Math.random() * 100000);
 
-      setDebugInfo(d => d + ' | status: ' + status);
+      setDebugInfo(d => d + ' | sending ' + totalChunks + ' chunks');
 
-      const responseText = response.text();
+      let lastResponseText = '';
 
-      setDebugInfo(d => d + ' | responseLen: ' + responseText.length);
+      for (let i = 0; i < totalChunks; i++) {
+        const chunkStart = i * CHUNK_SIZE;
+        const chunkEnd = Math.min(chunkStart + CHUNK_SIZE, base64Data.length);
+        const chunkData = base64Data.substring(chunkStart, chunkEnd);
+        const isLast = i === totalChunks - 1;
 
-      const result = JSON.parse(responseText);
+        const chunkResponse = await fetch(BACKEND_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            sessionId,
+            chunkIndex: i,
+            totalChunks,
+            chunkData,
+            isLast,
+          }),
+        });
+
+        lastResponseText = await chunkResponse.text();
+
+        setDebugInfo(
+          d => d + ' | chunk ' + (i + 1) + '/' + totalChunks + ' sent'
+        );
+      }
+
+      const result = JSON.parse(lastResponseText);
 
       if (result.error) {
         setDebugInfo(
