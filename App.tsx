@@ -22,13 +22,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import {
-  readFile,
-  copyFile,
-  exists,
-  unlink,
-  DocumentDirectoryPath,
-} from '@dr.pogodin/react-native-fs';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 
@@ -64,43 +58,29 @@ function AppContent() {
     setTranscribeError(null);
     setDebugInfo('Start: ' + path);
 
-    const stableCopyPath = DocumentDirectoryPath + '/alicaps_upload.mp4';
-
     try {
       const cleanPath = path.startsWith('file://')
         ? path.replace('file://', '')
         : path;
 
-      // Remove any old copy first
-      const alreadyExists = await exists(stableCopyPath);
-      if (alreadyExists) {
-        await unlink(stableCopyPath);
-      }
+      setDebugInfo(d => d + ' | uploading via blob-util');
 
-      // Copy the picked video into a stable Documents location
-      await copyFile(cleanPath, stableCopyPath);
-
-      setDebugInfo(d => d + ' | copied to Documents');
-
-      const base64Data = await readFile(stableCopyPath, 'base64');
-
-      setDebugInfo(
-        d => d + ' | read ' + base64Data.length + ' base64 chars'
+      const response = await ReactNativeBlobUtil.fetch(
+        'POST',
+        BACKEND_URL,
+        {
+          'Content-Type': 'video/mp4',
+        },
+        ReactNativeBlobUtil.wrap(cleanPath)
       );
 
-      const backendResponse = await fetch(BACKEND_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'text/plain',
-        },
-        body: base64Data,
-      });
+      const status = response.info().status;
 
-      setDebugInfo(d => d + ' | fetch returned, status: ' + backendResponse.status);
+      setDebugInfo(d => d + ' | status: ' + status);
 
-      const responseText = await backendResponse.text();
+      const responseText = response.text();
 
-      setDebugInfo(d => d + ' | responseTextLen: ' + responseText.length);
+      setDebugInfo(d => d + ' | responseLen: ' + responseText.length);
 
       const result = JSON.parse(responseText);
 
