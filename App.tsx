@@ -1,7 +1,5 @@
 /**
- * AliCaps
- * Video upload + auto speech-to-text captions + editing
- *
+ * AliCaps - Direct Deepgram Integration
  * @format
  */
 
@@ -24,7 +22,8 @@ import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
 import { readFile } from '@dr.pogodin/react-native-fs';
 
-const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
+const DEEPGRAM_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
+const DEEPGRAM_KEY = '65774809e8fdb3317afb3ec6dec8913202e05bd7';
 const CHUNK_SIZE = 250000;
 
 type WordTiming = {
@@ -46,22 +45,6 @@ function App() {
 
 function AppContent() {
   const [startupTest, setStartupTest] = useState<string>('Testing connectivity...');
-
-  React.useEffect(() => {
-    fetch(BACKEND_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ping: true }),
-    })
-      .then(res => res.text())
-      .then(text => {
-        setStartupTest('Basic fetch OK, len: ' + text.length);
-      })
-      .catch(err => {
-        setStartupTest('Basic fetch FAILED: ' + String(err?.message || err));
-      });
-  }, []);
-
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [captionText, setCaptionText] = useState<string>('');
   const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
@@ -70,43 +53,65 @@ function AppContent() {
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
 
+  React.useEffect(() => {
+    fetch('https://api.deepgram.com/v1/projects', {
+      method: 'GET',
+      headers: {
+        'Authorization': `Token ${DEEP@ÒAM_KEY}`,
+      },
+    })
+      .then(res => res.text())
+      .then(text => {
+        setStartupTest('Deepgram fetch OK, len: ' + text.length);
+      })
+      .catch(err => {
+        setStartupTest('Deepgram fetch FAILED: ' + String(err?.message || err));
+      });
+  }, []);
+
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
     setDebugInfo('Reading file...');
+
     try {
-      const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
+      const cleanPath = path.startsWith('file://')
+        ? path.replace('file://', '')
+        : path;
+
       const base64Data = await readFile(cleanPath, 'base64');
-      setDebugInfo(d => d + ' | read ' + base64Data.length + ' chars');
+      setDebugInfo((d: string) => d + ' | read ' + base64Data.length + ' chars');
+
       const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
-      const sessionId = 'sess_' + Date.now();
-      setDebugInfo(d => d + ' | sending ' + totalChunks + ' chunks');
-      let lastResponseText = '';
-      for (let i = 0; i < totalChunks; i++) {
-        const chunkStart = i * CHUNK_SIZE;
-        const chunkEnd = Math.min(chunkStart + CHUNK_SIZE, base64Data.length);
-        const chunkData = base64Data.substring(chunkStart, chunkEnd);
-        const isLast = i === totalChunks - 1;
-        const chunkResponse = await fetch(BACKEND_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sessionId, chunkIndex: i, totalChunks, chunkData, isLast }),
-        });
-        lastResponseText = await chunkResponse.text();
-        setDebugInfo(d => d + ' | chunk ' + (i + 1) + '/' + totalChunks + ' sent');
-      }
-      const result = JSON.parse(lastResponseText);
-      if (result.error) {
-        setDebugInfo(d => d + ' | backend error: ' + JSON.stringify(result));
-        setTranscribeError('Could not generate captions automatically. You can type them in manually.');
-      } else {
-        setCaptionText(result.transcript || '');
-        setWordTimings(result.words || []);
-        setDebugInfo(d => d + ' | SUCCESS, words: ' + (result.words || []).length);
-      }
+      setDebugInfo((d: string) => d + ' | ' + totalChunks + ' chunks, sending first...');
+
+      const firstChunk = base64Data.substring(0, Math.min(CHUNK_SIZE, base64Data.length));
+      setDebugInfo((d: string) => d + ' | sending chunk 1/' + totalChunks);
+
+      const response = await fetch(DEEPGRAM_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Token ${DEEP@ÒAM_KEY}`,
+          'Content-Type': 'video/mp4',
+        },
+        body: firstChunk,
+      });
+
+      setDebugInfo((d: string) => d + ' | status: ' + response.status);
+
+      const result = await response.json();
+      const transcript = result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
+      const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words || [];
+
+      setCaptionText(transcript);
+      setWordTimings(words);
+      setDebugInfo((d: string) => d + ' | SUCCESS words: ' + words.length);
+
     } catch (error: any) {
-      setDebugInfo(d => d + ' | EXCEPTION: ' + String(error?.message || error));
-      setTranscribeError('Could not generate captions automatically. You can type them in manually.');
+      setDebugInfo((d: string) => d + ' | EXCEPTION: ' + String(error?.message || error));
+      setTranscribeError(
+        'Could not generate captions automatically. You can type them in manually.'
+      );
     } finally {
       setIsTranscribing(false);
     }
@@ -114,36 +119,39 @@ function AppContent() {
 
   const pickVideo = () => {
     ImagePicker.openPicker({ mediaType: 'video' })
-      .then(video => {
+      .then((video: any) => {
         setVideoPath(video.path);
         setShowCaptionInput(false);
         setCaptionText('');
         setWordTimings([]);
         transcribeVideo(video.path);
       })
-      .catch(error => { console.log('Video pick failed:', error); });
-  };
-
-  return (
-    <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>AliCaps</Text>
-        <View style={styles.debugBox}>
-          <Text style={styles.debugText}>{startupTest}</Text>
-        </View>
-        {videoPath ? (
-          <View style={styles.previewContainer}>
-            <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} />
+      .catch((error: any) => { console.log('Video pick failed:', error); });
+  };ols={true} resizeMode="contain" repeat={true} />
             <TouchableOpacity style={styles.button} onPress={pickVideo}>
               <Text style={styles.buttonText}>Choose a different video</Text>
             </TouchableOpacity>
-            {isTranscribing && (<View style={styles.transcribingBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.transcribingText}>Listening to your video and generating captions...</Text></View>)}
-            {!isTranscribing && transcribeError && (<View style={styles.errorBox}><Text style={styles.errorText}>{transcribeError}</Text></View>)}
-            {debugInfo.length > 0 && (<View style={styles.debugBox}><Text style={styles.debugText}>{debugInfo}</Text></View>)}
+            {isTranscribing && (
+              <View style={styles.transcribingBox}>
+                <ActivityIndicator color="#FFD700" size="small" />
+                <Text style={styles.transcribingText}>Listening to your video and generating captions...</Text>
+              </View>
+            )}
+            {!isTranscribing && transcribeError && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{transcribeError}</Text>
+              </View>
+            )}
+            {debugInfo.length > 0 && (
+              <View style={styles.debugBox}>
+                <Text style={styles.debugText}>{debugInfo}</Text>
+              </View>
+            )}
             {!isTranscribing && !showCaptionInput && (
               <TouchableOpacity style={[styles.button, styles.captionButton]} onPress={() => setShowCaptionInput(true)}>
                 <Text style={styles.buttonText}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text>
-            </TouchableOpacity>)}
+              </TouchableOpacity>
+            )}
             {showCaptionInput && (
               <View style={styles.captionInputContainer}>
                 <Text style={styles.label}>Edit your caption text below. Press Enter / Return to control where each line breaks.</Text>
@@ -151,17 +159,20 @@ function AppContent() {
                 <TouchableOpacity style={[styles.button, styles.doneButton]} onPress={() => setShowCaptionInput(false)}>
                   <Text style={styles.buttonText}>Done</Text>
                 </TouchableOpacity>
-              </View>)}
+              </View>
+            )}
             {!showCaptionInput && !isTranscribing && captionText.length > 0 && (
               <View style={styles.captionPreviewBox}>
                 <Text style={styles.captionPreviewLabel}>Caption preview ({wordTimings.length} words timed):</Text>
                 <Text style={styles.captionPreviewText}>{captionText}</Text>
-              </View>)}
+              </View>
+            )}
           </View>
         ) : (
           <TouchableOpacity style={styles.button} onPress={pickVideo}>
             <Text style={styles.buttonText}>Select Video</Text>
-          </TouchableOpacity>)}
+          </TouchableOpacity>
+        )}
       </ScrollView>
     </KeyboardAvoidingView>
   );
