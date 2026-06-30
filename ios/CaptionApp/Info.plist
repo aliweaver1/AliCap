@@ -53,5 +53,10 @@
 <string>CaptionApp needs access to your photo library so you can select videos to add captions to.</string>
 <key>NSCameraUsageDescription</key>
 <string>CaptionApp needs access to your camera to record videos for captioning.</string>
+<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>
