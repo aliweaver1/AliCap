@@ -57,7 +57,7 @@ function AppContent() {
 
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [captionText, setCaptionText] = useState<string>('');
-  const [wordTimings, setWordTimings] = useState<{word:string;start:number;end:number}[]>([]);
+  const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
   const [showCaptionInput, setShowCaptionInput] = useState<boolean>(false);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
