@@ -27,6 +27,13 @@ import { readFile } from '@dr.pogodin/react-native-fs';
 const BACKEND_URL = 'https://alicaps-backend.mrayyynjaffar.workers.dev/';
 const CHUNK_SIZE = 250000;
 
+type WordTiming = {
+  word: string;
+  start: number;
+  end: number;
+  punctuated_word?: string;
+};
+
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
   return (
