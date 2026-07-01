@@ -56,7 +56,8 @@ function AppContent() {
     setLoading(true); setErr(null); setCap(''); setWords([]);
     try {
       const uri = path.startsWith('file://') ? path : 'file://' + path;
-      const blob = await (let r = await fetch(uri), r.blob());
+      const fileResp = await fetch(uri);
+      const blob = await fileResp.blob();
       const res = await fetch(DG_URL, {
         method: 'POST',
         headers: { Authorization: 'Token ' + DG_KEY, 'Content-Type': 'video/mp4' },
