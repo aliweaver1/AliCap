@@ -74,9 +74,7 @@ function AppContent() {
 
   const pickVideo = () => {
     ImagePicker.openPicker({ mediaType: 'video' })
-      .then((v: {
-
- any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
+      .then((v: any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
       .catch((e: any) => { console.log(e); });
   };
 
