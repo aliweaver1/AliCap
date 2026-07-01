@@ -1,9 +1,9 @@
 /**
- * AliCaps - Direct Deepgram Integration
+ * AliCaps - Direct Deepgram Integration + Live Caption Preview
  * @format
  */
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   StatusBar,
   StyleSheet,
@@ -20,11 +20,9 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-import { readFile } from '@dr.pogodin/react-native-fs';
 
-const DEEPGRAM_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
+const DEEPGP­_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
 const DEEPGRAM_KEY = '65774809e8fdb3317afb3ec6dec8913202e05bd7';
-const CHUNK_SIZE = 250000;
 
 type WordTiming = {
   word: string;
@@ -44,42 +42,42 @@ function App() {
 }
 
 function AppContent() {
-  const [startupTest, setStartupTest] = useState<string>('Testing connectivity...');
   const [videoPath, setVideoPath] = useState<string | null>(null);
   const [captionText, setCaptionText] = useState<string>('');
   const [wordTimings, setWordTimings] = useState<WordTiming[]>([]);
   const [showCaptionInput, setShowCaptionInput] = useState<boolean>(false);
   const [isTranscribing, setIsTranscribing] = useState<boolean>(false);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
-  const [debugInfo, setDebugInfo] = useState<string>('');
+  const [currentCaption, setCurrentCaption] = useState<string>('');
+  const [currentTime, setCurrentTime] = useState<number>(0);
 
-  React.useEffect(() => {
-    fetch('https://api.deepgram.com/v1/projects', {
-      method: 'GET',
-      headers: {
-        Authorization: 'Token 65774809e8fdb3317afb3ec6dec8913202e05bd7',
-      },
-    })
-      .then((res: any) => res.text())
-      .then((text: string) => {
-        setStartupTest('Deepgram OK, len: ' + text.length);
-      })
-      .catch((err: any) => {
-        setStartupTest('Deepgram FAILED: ' + String(err?.message || err));
-      });
-  }, []);
+  const getCaptionAtTime = (time: number, timings: WordTiming[]): string => {
+    if (!timings || timings.length === 0) return '';
+    const windowStart = time - 0.1;
+    const windowEnd = time + 2.5;
+    const visibleWords = timings.filter(
+      w => w.start >= windowStart && w.start <= windowEnd
+    );
+    return visibleWords.map(w => w.punctuated_word || w.word).join(' ');
+  };
+
+  const handleProgress = (data: any) => {
+    const time = data.currentTime;
+    setCurrentTime(time);
+    if (wordTimings.length > 0) {
+      setCurrentCaption(getCaptionAtTime(time, wordTimings));
+    }
+  };
 
   const transcribeVideo = async (path: string) => {
     setIsTranscribing(true);
     setTranscribeError(null);
-    setDebugInfo('Reading file...');
+    setCurrentCaption('');
+    setWordTimings([]);
     try {
-      const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
-      setDebugInfo((d: string) => d + ' | fetching file as blob');
       const fileUri = path.startsWith('file://') ? path : 'file://' + path;
       const fileResponse = await fetch(fileUri);
       const blob = await fileResponse.blob();
-      setDebugInfo((d: string) => d + ' | blob size: ' + blob.size);
       const response = await fetch(DEEPGRAM_URL, {
         method: 'POST',
         headers: {
@@ -88,116 +86,14 @@ function AppContent() {
         },
         body: blob,
       });
-      setDebugInfo((d: string) => d + ' | status: ' + response.status);
       const result = await response.json();
       const transcript = result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
       const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words || [];
       setCaptionText(transcript);
       setWordTimings(words);
-      setDebugInfo((d: string) => d + ' | SUCCESS words: ' + words.length);
     } catch (error: any) {
-      setDebugInfo((d: string) => d + ' | EXCEPTION: ' + String(error?.message || error));
       setTranscribeError('Could not generate captions automatically. You can type them in manually.');
     } finally {
       setIsTranscribing(false);
     }
-  };
-
-  const pickVideo = () => {
-    ImagePicker.openPicker({ mediaType: 'video' })
-      .then((video: any) => {
-        setVideoPath(video.path);
-        setShowCaptionInput(false);
-        setCaptionText('');
-        setWordTimings([]);
-        transcribeVideo(video.path);
-      })
-      .catch((error: any) => { console.log('Video pick failed:', error); });
-  };
-
-  return (
-    <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>AliCaps</Text>
-        <View style={styles.debugBox}>
-          <Text style={styles.debugText}>{startupTest}</Text>
-        </View>
-        {videoPath ? (
-          <View style={styles.previewContainer}>
-            <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} />
-            <TouchableOpacity style={styles.button} onPress={pickVideo}>
-              <Text style={styles.buttonText}>Choose a different video</Text>
-            </TouchableOpacity>
-            {isTranscribing && (
-              <View style={styles.transcribingBox}>
-                <ActivityIndicator color="#FFD700" size="small" />
-                <Text style={styles.transcribingText}>Listening to your video and generating captions...</Text>
-              </View>
-            )}
-            {!isTranscribing && transcribeError && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{transcribeError}</Text>
-              </View>
-            )}
-            {debugInfo.length > 0 && (
-              <View style={styles.debugBox}>
-                <Text style={styles.debugText}>{debugInfo}</Text>
-              </View>
-            )}
-            {!isTranscribing && !showCaptionInput && (
-              <TouchableOpacity style={[styles.button, styles.captionButton]} onPress={() => setShowCaptionInput(true)}>
-                <Text style={styles.buttonText}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text>
-              </TouchableOpacity>
-            )}
-            {showCaptionInput && (
-              <View style={styles.captionInputContainer}>
-                <Text style={styles.label}>Edit your caption text below. Press Enter / Return to control where each line breaks.</Text>
-                <TextInput style={styles.textInput} multiline={true} placeholder="Type your captions here..." placeholderTextColor="#7A8499" value={captionText} onChangeText={setCaptionText} textAlignVertical="top" />
-                <TouchableOpacity style={[styles.button, styles.doneButton]} onPress={() => setShowCaptionInput(false)}>
-                  <Text style={styles.buttonText}>Done</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-            {!showCaptionInput && !isTranscribing && captionText.length > 0 && (
-              <View style={styles.captionPreviewBox}>
-                <Text style={styles.captionPreviewLabel}>Caption preview ({wordTimings.length} words timed):</Text>
-                <Text style={styles.captionPreviewText}>{captionText}</Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.button} onPress={pickVideo}>
-            <Text style={styles.buttonText}>Select Video</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0B132B' },
-  flexFull: { flex: 1 },
-  content: { alignItems: 'center', justifyContent: 'flex-start', padding: 20, paddingTop: 40 },
-  title: { fontSize: 28, fontWeight: 'bold', color: '#FFD700', marginBottom: 30 },
-  button: { backgroundColor: '#FFD700', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 10, marginTop: 16 },
-  captionButton: { backgroundColor: '#4CC3FF' },
-  doneButton: { backgroundColor: '#4CD964', alignSelf: 'flex-end' },
-  buttonText: { color: '#0B132B', fontSize: 16, fontWeight: '600' },
-  previewContainer: { width: '100%', alignItems: 'center' },
-  videoPreview: { width: '100%', height: 350, backgroundColor: '#000', borderRadius: 12 },
-  transcribingBox: { width: '100%', marginTop: 20, backgroundColor: '#1C2541', borderRadius: 10, padding: 16, flexDirection: 'row', alignItems: 'center' },
-  transcribingText: { color: '#FFFFFF', fontSize: 14, marginLeft: 12, flex: 1 },
-  errorBox: { width: '100%', marginTop: 20, backgroundColor: '#3A1F1F', borderRadius: 10, padding: 14 },
-  errorText: { color: '#FFB4A2', fontSize: 13 },
-  debugBox: { width: '100%', marginTop: 12, backgroundColor: '#2A2A2A', borderRadius: 8, padding: 10 },
-  debugText: { color: '#88FF88', fontSize: 10, fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
-  captionInputContainer: { width: '100%', marginTop: 20 },
-  label: { color: '#FFFFFF', fontSize: 13, marginBottom: 10, opacity: 0.8 },
-  textInput: { width: '100%', minHeight: 140, backgroundColor: '#1C2541', color: '#FFFFFF', borderRadius: 10, padding: 14, fontSize: 16, borderWidth: 1, borderColor: '#3A4374' },
-  captionPreviewBox: { width: '100%', marginTop: 20, backgroundColor: '#1C2541', borderRadius: 10, padding: 14 },
-  captionPreviewLabel: { color: '#FFD700', fontSize: 13, fontWeight: '600', marginBottom: 8 },
-  captionPreviewText: { color: '#FFFFFF', fontSize: 15, lineHeight: 22 },
-});
-
-export default App;
+  };¥‘•½A…Ñ €ü€ (€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹ÁÉ•Ù¥•Ý½¹Ñ…¥¹•Éôø((€€€€€€€€€€€ì¼¨Y¥‘•¼€¬…ÁÑ¥½¸=Ù•É±…ä€¨½ô(€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹Ù¥‘•½]É…ÁÁ•Éôø(€€€€€€€€€€€€€€ñY¥‘•¼(€€€€€€€€€€€€€€€Í½ÕÉ”õíìÕÉ¤èÙ¥‘•½A…Ñ õô(€€€€€€€€€€€€€€€ÍÑå±”õíÍÑå±•Ì¹Ù¥‘•½AÉ•Ù¥•Ýô(€€€€€€€€€€€€€€€½¹ÑÉ½±ÌõíÑÉÕ•ô(€€€€€€€€€€€€€€€É•Í¥é•5½‘”ô‰½¹Ñ…¥¸ˆ(€€€€€€€€€€€€€€€É•Á•…ÐõíÑÉÕ•ô(€€€€€€€€€€€€€€€½¹AÉ½É•ÍÌõí¡…¹‘±•AÉ½É•ÍÍô(€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€€íÕÉÉ•¹Ñ…ÁÑ¥½¸¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹…ÁÑ¥½¹=Ù•É±…åôÁ½¥¹Ñ•ÉeÁÑÌô‰¹½¹”ˆø(€€€€€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹…ÁÑ¥½¹	Õ‰‰±•ôø(€€€€€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹…ÁÑ¥½¹=Ù•É±…åQ•áÑôùíÕÉÉ•¹Ñ…ÁÑ¥½¹ôð½Q•áÐø(€€€€€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€€€¥ô(€€€€€€€€€€€€ð½Y¥•Üø((€€€€€€€€€€€€ñQ½Õ¡…‰±•=Á…¥ÑäÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹ô½¹AÉ•ÍÌõíÁ¥­Y¥‘•½ôø(€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹Q•áÑôù¡½½Í”„‘¥™™•É•¹ÐÙ¥‘•¼ð½Q•áÐø(€€€€€€€€€€€€ð½Q½Õ¡…‰±•=Á…¥Ñäø((€€€€€€€€€€€í¥ÍQÉ…¹ÍÉ¥‰¥¹œ€˜˜€ (€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹ÑÉ…¹ÍÉ¥‰¥¹	½áôø(€€€€€€€€€€€€€€€€ñÑ¥Ù¥Ñå%¹‘¥…Ñ½È½±½ÈôˆÜÀÀˆÍ¥é”ô‰Íµ…±°ˆ€¼ø(€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹ÑÉ…¹ÍÉ¥‰¥¹Q•áÑôù1¥ÍÑ•¹¥¹œÑ¼å½ÕÈÙ¥‘•¼…¹•¹•É…Ñ¥¹œ…ÁÑ¥½¹Ì¸¸¸ð½Q•áÐø(€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€¥ô((€€€€€€€€€€€ì…¥ÍQÉ…¹ÍÉ¥‰¥¹œ€˜˜ÑÉ…¹ÍÉ¥‰•ÉÉ½È€˜˜€ (€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹•ÉÉ½É	½áôø(€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹•ÉÉ½ÉQ•áÑôùíÑÉ…¹ÍÉ¥‰•ÉÉ½Éôð½Q•áÐø(€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€¥ô((€€€€€€€€€€€ì…¥ÍQÉ…¹ÍÉ¥‰¥¹œ€˜˜Ý½É‘Q¥µ¥¹Ì¹±•¹Ñ €ø€À€˜˜€ (€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹ÍÕ•ÍÍ	½áôø(€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹ÍÕ•ÍÍQ•áÑôûŠrLíÝ½É‘Q¥µ¥¹Ì¹±•¹Ñ¡ôÝ½É‘ÌÑ¥µ•ƒŠPÁ±…äÑ¡”Ù¥‘•¼Ñ¼Í•”±¥Ù”…ÁÑ¥½¹Ì„ð½Q•áÐø(€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€¥ô((€€€€€€€€€€€ì…¥ÍQÉ…¹ÍÉ¥‰¥¹œ€˜˜€…Í¡½Ý…ÁÑ¥½¹%¹ÁÕÐ€˜˜€ (€€€€€€€€€€€€€€ñQ½Õ¡…‰±•=Á…¥ÑäÍÑå±”õímÍÑå±•Ì¹‰ÕÑÑ½¸°ÍÑå±•Ì¹…ÁÑ¥½¹	ÕÑÑ½¹uô½¹AÉ•ÍÌõì ¤€ôøÍ•ÑM¡½Ý…ÁÑ¥½¹%¹ÁÕÐ¡ÑÉÕ”¥ôø(€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹Q•áÑôùí…ÁÑ¥½¹Q•áÐ€ü€‘¥Ð…ÁÑ¥½¹Ìœ€è€‘…ÁÑ¥½¹Ì5…¹Õ…±±äôð½Q•áÐø(€€€€€€€€€€€€€€ð½Q½Õ¡…‰±•=Á…¥Ñäø(€€€€€€€€€€€€¥ô((€€€€€€€€€€€íÍ¡½Ý…ÁÑ¥½¹%¹ÁÕÐ€˜˜€ (€€€€€€€€€€€€€€ñY¥•ÜÍÑå±”õíÍÑå±•Ì¹…ÁÑ¥½¹%¹ÁÕÑ½¹Ñ…¥¹•Éôø(€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹±…‰•±ôù‘¥Ðå½ÕÈ…ÁÑ¥½¸Ñ•áÐ‰•±½Ü¸AÉ•ÍÌ¹Ñ•È€¼I•ÑÕÉ¸Ñ¼½¹ÑÉ½°Ý¡•É”•… ±¥¹”‰É•…­Ì¸ð½Q•áÐø(€€€€€€€€€€€€€€€€ñQ•áÑ%¹ÁÕÐ(€€€€€€€€€€€€€€€€€ÍÑå±”õíÍÑå±•Ì¹Ñ•áÑ%¹ÁÕÑô(€€€€€€€€€€€€€€€€€µÕ±Ñ¥±¥¹”õíÑÉÕ•ô(€€€€€€€€€€€€€€€€€Á±…•¡½±‘•Èô‰QåÁ”å½ÕÈ…ÁÑ¥½¹Ì¡•É”¸¸¸ˆ(€€€€€€€€€€€€€€€€€Á±…•¡½±‘•ÉQ•áÑ½±½ÈôˆŒÝàÐääˆ(€€€€€€€€€€€€€€€€€Ù…±Õ”õí…ÁÑ¥½¹Q•áÑô(€€€€€€€€€€€€€€€€€½¹¡…¹•Q•áÐõíÍ•Ñ…ÁÑ¥½¹Q•áÑô(€€€€€€€€€€€€€€€€€Ñ•áÑ±¥¹Y•ÉÑ¥…°ô‰Ñ½Àˆ(€€€€€€€€€€€€€€€€¼ø(€€€€€€€€€€€€€€€€ñQ½Õ¡…‰±•=Á…¥ÑäÍÑå±”õímÍÑå±•Ì¹‰ÕÑÑ½¸°ÍÑå±•Ì¹‘½¹•	ÕÑÑ½¹uô½¹AÉ•ÍÌõì ¤€ôøÍ•ÑM¡½Ý…ÁÑ¥½¹%¹ÁÕÐ¡™…±Í”¥ôø(€€€€€€€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹Q•áÑôù½¹”ð½Q•áÐø(€€€€€€€€€€€€€€€€ð½Q½Õ¡…‰±•=Á…¥Ñäø(€€€€€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€€€€€¥ô((€€€€€€€€€€ð½Y¥•Üø(€€€€€€€€¤€è€ (€€€€€€€€€€ñQ½Õ¡…‰±•=Á…¥ÑäÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹ô½¹AÉ•ÍÌõíÁ¥­Y¥‘•½ôø(€€€€€€€€€€€€ñQ•áÐÍÑå±”õíÍÑå±•Ì¹‰ÕÑÑ½¹Q•áÑôùM•±•ÐY¥‘•¼ð½Q•áÐø(€€€€€€€€€€ð½Q½Õ¡…‰±•=Á…¥Ñäø(€€€€€€€€¥ô(€€€€€€ð½MÉ½±±Y¥•Üø(€€€€ð½-•å‰½…É‘Ù½¥‘¥¹Y¥•Üø(€€¤ì)ô()½¹ÍÐÍÑå±•Ì€ôMÑå±•M¡••Ð¹É•…Ñ”¡ì(€½¹Ñ…¥¹•Èèì™±•àè€Ä°‰…­É½Õ¹‘½±½Èè€œŒÁÄÌÉœô°(€™±•áÕ±°èì™±•àè€Äô°(€½¹Ñ•¹Ðèì…±¥¹%Ñ•µÌè€•¹Ñ•Èœ°©ÕÍÑ¥™å½¹Ñ•¹Ðè€™±•àµÍÑ…ÉÐœ°Á…‘‘¥¹œè€ÈÀ°Á…‘‘¥¹Q½Àè€ÐÀô°(€Ñ¥Ñ±”èì™½¹ÑM¥é”è€Èà°™½¹Ñ]•¥¡Ðè€‰½±œ°½±½Èè€œÜÀÀœ°µ…É¥¹	½ÑÑ½´è€ÌÀô°(€‰ÕÑÑ½¸èì‰…­É½Õ¹‘½±½Èè€œÜÀÀœ°Á…‘‘¥¹Y•ÉÑ¥…°è€ÄÐ°Á…‘‘¥¹!½É¥é½¹Ñ…°è€Èà°‰½É‘•ÉI…‘¥ÕÌè€ÄÀ°µ…É¥¹Q½Àè€ÄØô°(€…ÁÑ¥½¹	ÕÑÑ½¸èì‰…­É½Õ¹‘½±½Èè€œŒÑÍœô°(€‘½¹•	ÕÑÑ½¸èì‰…­É½Õ¹‘½±½Èè€œŒÑäØÐœ°…±¥¹M•±˜è€™±•àµ•¹œô°(€‰ÕÑÑ½¹Q•áÐèì½±½Èè€œŒÁÄÌÉœ°™½¹ÑM¥é”è€ÄØ°™½¹Ñ]•¥¡Ðè€œØÀÀœô°(€ÁÉ•Ù¥•Ý½¹Ñ…¥¹•ÈèìÝ¥‘Ñ è€œÄÀÀ”œ°…±¥¹%Ñ•µÌè€•¹Ñ•Èœô°(€Ù¥‘•½]É…ÁÁ•ÈèìÝ¥‘Ñ è€œÄÀÀ”œ°¡•¥¡Ðè€ÌàÀ°Á½Í¥Ñ¥½¸è€É•±…Ñ¥Ù”œ°‰…­É½Õ¹‘½±½Èè€œŒÀÀÀœ°‰½É‘•ÉI…‘¥ÕÌè€ÄÈ°½Ù•É™±½Üè€¡¥‘‘•¸œô°(€Ù¥‘•½AÉ•Ù¥•ÜèìÝ¥‘Ñ è€œÄÀÀ”œ°¡•¥¡Ðè€œÄÀÀ”œô°(€…ÁÑ¥½¹=Ù•É±…äèìÁ½Í¥Ñ¥½¸è€…‰Í½±ÕÑ”œ°‰½ÑÑ½´è€ÐÀ°±•™Ðè€À°É¥¡Ðè€À°…±¥¹%Ñ•µÌè€•¹Ñ•Èœ°Á…‘‘¥¹!½É¥é½¹Ñ…°è€ÄÈô°(€…ÁÑ¥½¹	Õ‰‰±”èì‰…­É½Õ¹‘½±½Èè€É‰„ À°À°À°À¸ÜÔ¤œ°‰½É‘•ÉI…‘¥ÕÌè€à°Á…‘‘¥¹!½É¥é½¹Ñ…°è€ÄÐ°Á…‘‘¥¹Y•ÉÑ¥…°è€à°µ…á]¥‘Ñ è€œäÀ”œô°(€…ÁÑ¥½¹=Ù•É±…åQ•áÐèì½±½Èè€œœ°™½¹ÑM¥é”è€Äà°™½¹Ñ]•¥¡Ðè€œÜÀÀœ°Ñ•áÑ±¥¸è€•¹Ñ•Èœ°±¥¹•!•¥¡Ðè€ÈØô°(€ÑÉ…¹ÍÉ¥‰¥¹	½àèìÝ¥‘Ñ è€œÄÀÀ”œ°µ…É¥¹Q½Àè€ÈÀ°‰…­É½Õ¹‘½±½Èè€œŒÅÈÔÐÄœ°‰½É‘•ÉI…‘¥ÕÌè€ÄÀ°Á…‘‘¥¹œè€ÄØ°™±•á¥É•Ñ¥½¸è€É½Üœ°…±¥¹%Ñ•µÌè€•¹Ñ•Èœô°(€ÑÉ…¹ÍÉ¥‰¥¹Q•áÐèì½±½Èè€œœ°™½¹ÑM¥é”è€ÄÐ°µ…É¥¹1•™Ðè€ÄÈ°™±•àè€Äô°(€•ÉÉ½É	½àèìÝ¥‘Ñ è€œÄÀÀ”œ°µ…É¥¹Q½Àè€ÈÀ°‰…­É½Õ¹‘½±½Èè€œŒÍÅÅœ°‰½É‘•ÉI…‘¥ÕÌè€ÄÀ°Á…‘‘¥¹œè€ÄÐô°(€•ÉÉ½ÉQ•áÐèì½±½Èè€œÑÈœ°™½¹ÑM¥é”è€ÄÌô°(€ÍÕ•ÍÍ	½àèìÝ¥‘Ñ è€œÄÀÀ”œ°µ…É¥¹Q½Àè€ÄØ°‰…­É½Õ¹‘½±½Èè€œŒÅÍÅœ°‰½É‘•ÉI…‘¥ÕÌè€ÄÀ°Á…‘‘¥¹œè€ÄÐô°(€ÍÕ•ÍÍQ•áÐèì½±½Èè€œŒàáààœ°™½¹ÑM¥é”è€ÄÌô°(€…ÁÑ¥½¹%¹ÁÕÑ½¹Ñ…¥¹•ÈèìÝ¥‘Ñ è€œÄÀÀ”œ°µ…É¥¹Q½Àè€ÈÀô°(€±…‰•°èì½±½Èè€œœ°™½¹ÑM¥é”è€ÄÌ°µ…É¥¹	½ÑÑ½´è€ÄÀ°½Á…¥Ñäè€À¸àô°(€Ñ•áÑ%¹ÁÕÐèìÝ¥‘Ñ è€œÄÀÀ”œ°µ¥¹!•¥¡Ðè€ÄÐÀ°‰…­É½Õ¹‘½±½Èè€œŒÅÈÔÐÄœ°½±½Èè€œœ°‰½É‘•ÉI…‘¥ÕÌè€ÄÀ°Á…‘‘¥¹œè€ÄÐ°™½¹ÑM¥é”è€ÄØ°‰½É‘•É]¥‘Ñ è€Ä°‰½É‘•É½±½Èè€œŒÍÐÌÜÐœô°)ô¤ì()•áÁ½ÉÐ‘•™…Õ±ÐÁÀì(
