@@ -112,7 +112,20 @@ function AppContent() {
         transcribeVideo(video.path);
       })
       .catch((error: any) => { console.log('Video pick failed:', error); });
-  };es.buttonText}>Choose a different video</Text>
+  };
+
+  return (
+    <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.title}>AliCaps</Text>
+        <View style={styles.debugBox}>
+          <Text style={styles.debugText}>{startupTest}</Text>
+        </View>
+        {videoPath ? (
+          <View style={styles.previewContainer}>
+            <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} />
+            <TouchableOpacity style={styles.button} onPress={pickVideo}>
+              <Text style={styles.buttonText}>Choose a different video</Text>
             </TouchableOpacity>
             {isTranscribing && (
               <View style={styles.transcribingBox}>
