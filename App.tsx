@@ -75,17 +75,18 @@ function AppContent() {
     setDebugInfo('Reading file...');
     try {
       const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
-      const base64Data = await readFile(cleanPath, 'base64');
-      setDebugInfo((d: string) => d + ' | read ' + base64Data.length + ' chars');
-      const firstChunk = base64Data.substring(0, Math.min(CHUNK_SIZE, base64Data.length));
-      setDebugInfo((d: string) => d + ' | sending to Deepgram');
+      setDebugInfo((d: string) => d + ' | fetching file as blob');
+      const fileUri = path.startsWith('file://') ? path : 'file://' + path;
+      const fileResponse = await fetch(fileUri);
+      const blob = await fileResponse.blob();
+      setDebugInfo((d: string) => d + ' | blob size: ' + blob.size);
       const response = await fetch(DEEPGRAM_URL, {
         method: 'POST',
         headers: {
           Authorization: 'Token 65774809e8fdb3317afb3ec6dec8913202e05bd7',
           'Content-Type': 'video/mp4',
         },
-        body: firstChunk,
+        body: blob,
       });
       setDebugInfo((d: string) => d + ' | status: ' + response.status);
       const result = await response.json();
