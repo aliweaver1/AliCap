@@ -57,15 +57,15 @@ function AppContent() {
     fetch('https://api.deepgram.com/v1/projects', {
       method: 'GET',
       headers: {
-        'Authorization': `Token ${DEEP@ÒAM_KEY}`,
+        Authorization: 'Token 65774809e8fdb3317afb3ec6dec8913202e05bd7',
       },
     })
-      .then(res => res.text())
-      .then(text => {
-        setStartupTest('Deepgram fetch OK, len: ' + text.length);
+      .then((res: any) => res.text())
+      .then((text: string) => {
+        setStartupTest('Deepgram OK, len: ' + text.length);
       })
-      .catch(err => {
-        setStartupTest('Deepgram fetch FAILED: ' + String(err?.message || err));
+      .catch((err: any) => {
+        setStartupTest('Deepgram FAILED: ' + String(err?.message || err));
       });
   }, []);
 
@@ -73,45 +73,30 @@ function AppContent() {
     setIsTranscribing(true);
     setTranscribeError(null);
     setDebugInfo('Reading file...');
-
     try {
-      const cleanPath = path.startsWith('file://')
-        ? path.replace('file://', '')
-        : path;
-
+      const cleanPath = path.startsWith('file://') ? path.replace('file://', '') : path;
       const base64Data = await readFile(cleanPath, 'base64');
       setDebugInfo((d: string) => d + ' | read ' + base64Data.length + ' chars');
-
-      const totalChunks = Math.ceil(base64Data.length / CHUNK_SIZE);
-      setDebugInfo((d: string) => d + ' | ' + totalChunks + ' chunks, sending first...');
-
       const firstChunk = base64Data.substring(0, Math.min(CHUNK_SIZE, base64Data.length));
-      setDebugInfo((d: string) => d + ' | sending chunk 1/' + totalChunks);
-
+      setDebugInfo((d: string) => d + ' | sending to Deepgram');
       const response = await fetch(DEEPGRAM_URL, {
         method: 'POST',
         headers: {
-          'Authorization': `Token ${DEEP@ÒAM_KEY}`,
+          Authorization: 'Token 65774809e8fdb3317afb3ec6dec8913202e05bd7',
           'Content-Type': 'video/mp4',
         },
         body: firstChunk,
       });
-
       setDebugInfo((d: string) => d + ' | status: ' + response.status);
-
       const result = await response.json();
       const transcript = result?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '';
       const words = result?.results?.channels?.[0]?.alternatives?.[0]?.words || [];
-
       setCaptionText(transcript);
       setWordTimings(words);
       setDebugInfo((d: string) => d + ' | SUCCESS words: ' + words.length);
-
     } catch (error: any) {
       setDebugInfo((d: string) => d + ' | EXCEPTION: ' + String(error?.message || error));
-      setTranscribeError(
-        'Could not generate captions automatically. You can type them in manually.'
-      );
+      setTranscribeError('Could not generate captions automatically. You can type them in manually.');
     } finally {
       setIsTranscribing(false);
     }
@@ -127,9 +112,7 @@ function AppContent() {
         transcribeVideo(video.path);
       })
       .catch((error: any) => { console.log('Video pick failed:', error); });
-  };ols={true} resizeMode="contain" repeat={true} />
-            <TouchableOpacity style={styles.button} onPress={pickVideo}>
-              <Text style={styles.buttonText}>Choose a different video</Text>
+  };es.buttonText}>Choose a different video</Text>
             </TouchableOpacity>
             {isTranscribing && (
               <View style={styles.transcribingBox}>
