@@ -13,7 +13,7 @@ import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
 // FFmpegKit temporarily disabled
 import { DocumentDirectoryPath } from '@dr.pogodin/react-native-fs';
-import { CameraRoll } from '@react-native-camera-roll/camera-roll';
+// CameraRoll temporarily disabled
 
 const DG_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
 const DG_KEY = '65774809e8fdb3317afb3ec6dec8913202e05bd7';
@@ -148,7 +148,7 @@ function AppContent() {
 
       if (ReturnCode.isSuccess(returnCode)) {
         setExportProgress('Saving to camera roll...');
-        await CameraRoll.save('file://' + outputPath, { type: 'video' });
+        // await CameraRoll.save('file://' + outputPath, { type: 'video' });
         setExporting(false);
         setShowExport(false);
         Alert.alert('Done!', 'Video saved to your camera roll.');

@@ -16,7 +16,6 @@ end
 
 target 'CaptionApp' do
 
-  pod 'RNCCameraroll', :podspec => '../node_modules/@react-native-camera-roll/camera-roll/ios/RNCCameraroll.podspec'
   config = use_native_modules!
 
   use_react_native!(
