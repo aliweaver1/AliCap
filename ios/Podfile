@@ -15,7 +15,7 @@ if linkage != nil
 end
 
 target 'CaptionApp' do
-  pod 'ffmpeg-kit-react-native', :podspec => '../node_modules/@apescoding/ffmpeg-kit-react-native/ffmpeg-kit-react-native.podspec'
+
   config = use_native_modules!
 
   use_react_native!(

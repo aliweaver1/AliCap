@@ -2082,7 +2082,7 @@ PODS:
 
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
-  - "ffmpeg-kit-react-native (from `../node_modules/@apescoding/ffmpeg-kit-react-native/ffmpeg-kit-react-native.podspec`)"
+  - "ffmpeg-kit-react-native (from `../node_modules/@apescoding/ffmpeg-kit-react-native`)"
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
@@ -2173,7 +2173,7 @@ EXTERNAL SOURCES:
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
   ffmpeg-kit-react-native:
-    :podspec: "../node_modules/@apescoding/ffmpeg-kit-react-native/ffmpeg-kit-react-native.podspec"
+    :path: "../node_modules/@apescoding/ffmpeg-kit-react-native"
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.14
@@ -2421,6 +2421,6 @@ SPEC CHECKSUMS:
   TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
   Yoga: 94172d87dd5d83fc929bf1ee53121b5d4490b5f2
 
-PODFILE CHECKSUM: 84a219521322de6405af64ebca5c7e8219664e81
+PODFILE CHECKSUM: adf06fe2af41724e71581db2a6bdc02e9206629f
 
 COCOAPODS: 1.15.2
