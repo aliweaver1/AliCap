@@ -24,7 +24,7 @@ jobs:
       - name: Install CocoaPods dependencies
         run: |
           cd ios
-          bundle exec pod install
+          pod install --repo-update
 
       - name: Build unsigned iOS app
         run: |
