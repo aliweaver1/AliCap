@@ -4,8 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { NativeModules } from 'react-native';
-const { AliCapsExporter } = NativeModules;
+
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
