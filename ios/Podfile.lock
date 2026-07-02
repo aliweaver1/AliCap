@@ -1,7 +1,5 @@
 PODS:
   - FBLazyVector (0.86.0)
-  - ffmpeg-kit-react-native (1.0.8):
-    - React-Core
   - hermes-engine (250829098.0.14):
     - hermes-engine/Pre-built (= 250829098.0.14)
   - hermes-engine/Pre-built (250829098.0.14)
@@ -2082,7 +2080,6 @@ PODS:
 
 DEPENDENCIES:
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
-  - "ffmpeg-kit-react-native (from `../node_modules/@apescoding/ffmpeg-kit-react-native`)"
   - hermes-engine (from `../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec`)
   - RCTDeprecation (from `../node_modules/react-native/ReactApple/Libraries/RCTFoundation/RCTDeprecation`)
   - RCTRequired (from `../node_modules/react-native/Libraries/Required`)
@@ -2172,8 +2169,6 @@ SPEC REPOS:
 EXTERNAL SOURCES:
   FBLazyVector:
     :path: "../node_modules/react-native/Libraries/FBLazyVector"
-  ffmpeg-kit-react-native:
-    :path: "../node_modules/@apescoding/ffmpeg-kit-react-native"
   hermes-engine:
     :podspec: "../node_modules/react-native/sdks/hermes-engine/hermes-engine.podspec"
     :tag: hermes-v250829098.0.14
@@ -2338,7 +2333,6 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   FBLazyVector: b3e7ad108f0d882e30445c5527d774e3fd432f3d
-  ffmpeg-kit-react-native: b11e5c879e11c66394badee81358af8f446cc2d1
   hermes-engine: 78b18051bfb03843d9302702e0f8f152110fb48c
   RCTDeprecation: 2a74a2c57675e64419bd89078efde81f7c1de90b
   RCTRequired: 30451112e6fef4e6f31b4e7eee0845156e35e4b0
@@ -2421,6 +2415,6 @@ SPEC CHECKSUMS:
   TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
   Yoga: 94172d87dd5d83fc929bf1ee53121b5d4490b5f2
 
-PODFILE CHECKSUM: adf06fe2af41724e71581db2a6bdc02e9206629f
+PODFILE CHECKSUM: 3784cf5d21fd1ffc80c63678fc6c3d04e2ab8e87
 
 COCOAPODS: 1.15.2
