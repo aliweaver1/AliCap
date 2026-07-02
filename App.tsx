@@ -4,6 +4,8 @@
  */
 
 import React, { useState } from 'react';
+import { NativeModules } from 'react-native';
+const { AliCapsExporter } = NativeModules;
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -50,6 +52,10 @@ function AppContent() {
   const [cap, setCap] = useState<string>('');
   const [styleId, setStyleId] = useState<string>('ali_bold');
   const [showStylePicker, setShowStylePicker] = useState<boolean>(false);
+  const [showExport, setShowExport] = useState<boolean>(false);
+  const [resolution, setResolution] = useState<string>('1080p');
+  const [fps, setFps] = useState<number>(30);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   const currentStyle = STYLES.find(s => s.id === styleId) || STYLES[0];
 
@@ -79,6 +85,32 @@ function AppContent() {
     } finally { setLoading(false); }
   };
 
+  const exportVideo = async () => {
+    if (!videoPath || words.length === 0) return;
+    setExporting(true);
+    try {
+      const cleanPath = videoPath.startsWith('file://') ? videoPath.replace('file://', '') : videoPath;
+      const captions: any[] = [];
+      let i = 0;
+      while (i < words.length) {
+        const chunk = words.slice(i, i + 5);
+        captions.push({
+          text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '),
+          start: chunk[0].start,
+          end: chunk[chunk.length - 1].end,
+        });
+        i += 5;
+      }
+      await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
+      setExporting(false);
+      setShowExport(false);
+      Alert.alert('Done!', 'Video saved to your Camera Roll!');
+    } catch (e: any) {
+      setExporting(false);
+      Alert.alert('Export Failed', String(e?.message || e));
+    }
+  };
+
   const pickVideo = () => {
     ImagePicker.openPicker({ mediaType: 'video' })
       .then((v: any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
@@ -86,6 +118,7 @@ function AppContent() {
   };
 
   return (
+    <>
     <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>AliCaps</Text>
@@ -117,6 +150,11 @@ function AppContent() {
             {loading && <View style={styles.infoBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.infoTxt}>Listening to your video...</Text></View>}
             {err && <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View>}
             {!loading && words.length > 0 && <View style={styles.okBox}><Text style={styles.okTxt}>{words.length} words timed - play video to see live captions!</Text></View>}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={() => setShowExport(true)}>
+                <Text style={styles.btnTxt}>Export Video</Text>
+              </TouchableOpacity>
+            )}
             {!loading && !showEdit && <TouchableOpacity style={[styles.btn, styles.editBtn]} onPress={() => setShowEdit(true)}><Text style={styles.btnTxt}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text></TouchableOpacity>}
             {showEdit && <View style={styles.editBox}>
               <Text style={styles.label}>Edit your caption text below:</Text>
@@ -129,6 +167,46 @@ function AppContent() {
         )}
       </ScrollView>
     </KeyboardAvoidingView>
+
+      <Modal visible={showExport} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Export Video</Text>
+            <Text style={styles.modalLabel}>Resolution:</Text>
+            <View style={styles.optRow}>
+              {['1080p', '4K'].map(r => (
+                <TouchableOpacity key={r} style={[styles.optBtn, r === resolution && styles.optBtnActive]} onPress={() => setResolution(r)}>
+                  <Text style={[styles.optTxt, r === resolution && styles.optTxtActive]}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.modalLabel}>Frame Rate:</Text>
+            <View style={styles.optRow}>
+              {[10, 20, 30, 40, 50, 60].map(f => (
+                <TouchableOpacity key={f} style={[styles.optBtn, f === fps && styles.optBtnActive]} onPress={() => setFps(f)}>
+                  <Text style={[styles.optTxt, f === fps && styles.optTxtActive]}>{f}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {exporting ? (
+              <View style={styles.exportingBox}>
+                <ActivityIndicator color="#FFD700" size="large" />
+                <Text style={styles.exportingTxt}>Exporting video... Please wait</Text>
+              </View>
+            ) : (
+              <View style={styles.modalBtns}>
+                <TouchableOpacity style={[styles.btn, { backgroundColor: '#888' }]} onPress={() => setShowExport(false)}>
+                  <Text style={styles.btnTxt}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={exportVideo}>
+                  <Text style={styles.btnTxt}>Export {resolution} {fps}fps</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
+    </>
   );
 }
 
@@ -140,6 +218,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: '#FFD700', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 10, marginTop: 16 },
   styleBtn: { backgroundColor: '#3A4374' },
   editBtn: { backgroundColor: '#4CC3FF' },
+  exportBtn: { backgroundColor: '#4CD964' },
   doneBtn: { backgroundColor: '#4CD964', alignSelf: 'flex-end' },
   btnTxt: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', textAlign: 'center' },
   previewContainer: { width: '100%', alignItems: 'center' },
@@ -160,6 +239,18 @@ const styles = StyleSheet.create({
   editBox: { width: '100%', marginTop: 20 },
   label: { color: '#FFFFFF', fontSize: 13, marginBottom: 10, opacity: 0.8 },
   input: { width: '100%', minHeight: 140, backgroundColor: '#1C2541', color: '#FFFFFF', borderRadius: 10, padding: 14, fontSize: 16, borderWidth: 1, borderColor: '#3A4374' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalBox: { backgroundColor: '#0B132B', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  modalTitle: { color: '#FFD700', fontSize: 22, fontWeight: '800', marginBottom: 20, textAlign: 'center' },
+  modalLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', marginBottom: 10, marginTop: 16 },
+  optRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  optBtn: { backgroundColor: '#1C2541', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: '#3A4374' },
+  optBtnActive: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
+  optTxt: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  optTxtActive: { color: '#0B132B' },
+  exportingBox: { alignItems: 'center', padding: 20 },
+  exportingTxt: { color: '#FFFFFF', fontSize: 15, marginTop: 12, textAlign: 'center' },
+  modalBtns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 },
 });
 
 export default App;
