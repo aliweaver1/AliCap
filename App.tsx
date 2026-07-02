@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
-const { FFmpegKit, ReturnCode } = require('@apescoding/ffmpeg-kit-react-native');
+// FFmpegKit temporarily disabled
 import { DocumentDirectoryPath } from '@dr.pogodin/react-native-fs';
 import { CameraRoll } from '@react-native-camera-roll/camera-roll';
 
