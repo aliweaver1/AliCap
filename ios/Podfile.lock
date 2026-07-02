@@ -2028,6 +2028,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNCCameraroll (1.0.0):
+    - React-Core
   - RNImageCropPicker (0.51.1):
     - hermes-engine
     - RCTRequired
@@ -2162,6 +2164,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - "ReactNativeFs (from `../node_modules/@dr.pogodin/react-native-fs`)"
+  - "RNCCameraroll (from `../node_modules/@react-native-camera-roll/camera-roll/ios/RNCCameraroll.podspec`)"
   - RNImageCropPicker (from `../node_modules/react-native-image-crop-picker`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2331,6 +2334,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeFs:
     :path: "../node_modules/@dr.pogodin/react-native-fs"
+  RNCCameraroll:
+    :podspec: "../node_modules/@react-native-camera-roll/camera-roll/ios/RNCCameraroll.podspec"
   RNImageCropPicker:
     :path: "../node_modules/react-native-image-crop-picker"
   Yoga:
@@ -2417,10 +2422,11 @@ SPEC CHECKSUMS:
   ReactCommon: 4d01bfb533b93a2103329dfefc74db6a9e272888
   ReactNativeDependencies: fa0a54b3f5319ae0e3b9aff32bfee7a424b88e66
   ReactNativeFs: 737101309ab9f108f7172f4ea0ceb1ffcadfede2
+  RNCCameraroll: d484a8bf373bbc35d0a780f567df9310e1b58187
   RNImageCropPicker: 46ad22e174afcc0ffcc7bfb741ea91457d20b4a1
   TOCropViewController: 797deaf39c90e6e9ddd848d88817f6b9a8a09888
   Yoga: 94172d87dd5d83fc929bf1ee53121b5d4490b5f2
 
-PODFILE CHECKSUM: adf06fe2af41724e71581db2a6bdc02e9206629f
+PODFILE CHECKSUM: 6141f2c7a571fb4cc2629aa12de2d985db525705
 
 COCOAPODS: 1.15.2
