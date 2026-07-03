@@ -99,6 +99,7 @@ function AppContent() {
   };
 
   return (
+    <>
     <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>AliCaps</Text>
@@ -185,6 +186,7 @@ function AppContent() {
           </View>
         </View>
       </Modal>
+    </>
   );
 }
 
