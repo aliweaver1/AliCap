@@ -4,8 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { NativeModules, Alert, Modal } from 'react-native';
-const AliCapsExporter = NativeModules.AliCapsExporter || null;
+import { Alert, Modal } from 'react-native';
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -101,10 +100,7 @@ function AppContent() {
         });
         i += 5;
       }
-      if (!AliCapsExporter) {
-        throw new Error('Export module not available');
-      }
-      await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
+      throw new Error('Export coming soon');
       setExporting(false);
       setShowExport(false);
       Alert.alert('Done!', 'Video saved to Camera Roll!');
