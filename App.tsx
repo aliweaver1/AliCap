@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { Alert, Modal, TurboModuleRegistry } from 'react-native';
-const AliCapsExporter = TurboModuleRegistry.get<any>('AliCapsExporter');
+import { Alert, Modal } from 'react-native';
+
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
