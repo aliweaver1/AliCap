@@ -45,8 +45,4 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
-
-  override func extraModules(for bridge: RCTBridge) -> [RCTBridgeModule] {
-    return [AliCapsExporter()]
-  }
 }
