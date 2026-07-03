@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { NativeModules, Alert, Modal } from 'react-native';
-const { AliCapsExporter } = NativeModules;
+const AliCapsExporter = NativeModules?.AliCapsExporter ?? null;
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
