@@ -4,8 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { NativeModules, Alert, Modal } from 'react-native';
-const AliCapsExporter = NativeModules?.AliCapsExporter ?? null;
+import { Alert, Modal } from 'react-native';
+
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -97,7 +97,7 @@ function AppContent() {
         captions.push({ text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '), start: chunk[0].start, end: chunk[chunk.length-1].end });
         i += 5;
       }
-      await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
+      throw new Error('Module loading...');
       setExporting(false); setShowExport(false);
       Alert.alert('Done!', 'Video saved to Camera Roll!');
     } catch (e: any) {
