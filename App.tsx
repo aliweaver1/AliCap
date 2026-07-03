@@ -100,7 +100,8 @@ function AppContent() {
         });
         i += 5;
       }
-      await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
+      // Export coming soon
+      throw new Error('Export feature coming soon');
       setExporting(false);
       setShowExport(false);
       Alert.alert('Done!', 'Video saved to your Camera Roll!');
