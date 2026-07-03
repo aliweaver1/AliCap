@@ -4,6 +4,8 @@
  */
 
 import React, { useState } from 'react';
+import { NativeModules, Alert, Modal } from 'react-native';
+const AliCapsExporter = NativeModules.AliCapsExporter;
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -50,6 +52,10 @@ function AppContent() {
   const [cap, setCap] = useState<string>('');
   const [styleId, setStyleId] = useState<string>('ali_bold');
   const [showStylePicker, setShowStylePicker] = useState<boolean>(false);
+  const [showExport, setShowExport] = useState<boolean>(false);
+  const [resolution, setResolution] = useState<string>('1080p');
+  const [fps, setFps] = useState<number>(30);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   const currentStyle = STYLES.find(s => s.id === styleId) || STYLES[0];
 
@@ -77,6 +83,32 @@ function AppContent() {
     } catch (e: any) {
       setErr('Could not generate captions. You can type them manually.');
     } finally { setLoading(false); }
+  };
+
+  const exportVideo = async () => {
+    if (!videoPath || words.length === 0) return;
+    setExporting(true);
+    try {
+      const cleanPath = videoPath.startsWith('file://') ? videoPath.replace('file://', '') : videoPath;
+      const captions: any[] = [];
+      let i = 0;
+      while (i < words.length) {
+        const chunk = words.slice(i, i + 5);
+        captions.push({
+          text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '),
+          start: chunk[0].start,
+          end: chunk[chunk.length - 1].end,
+        });
+        i += 5;
+      }
+      await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
+      setExporting(false);
+      setShowExport(false);
+      Alert.alert('Done!', 'Video saved to Camera Roll!');
+    } catch (e: any) {
+      setExporting(false);
+      Alert.alert('Export Failed', String(e?.message || e));
+    }
   };
 
   const pickVideo = () => {
@@ -117,6 +149,11 @@ function AppContent() {
             {loading && <View style={styles.infoBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.infoTxt}>Listening to your video...</Text></View>}
             {err && <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View>}
             {!loading && words.length > 0 && <View style={styles.okBox}><Text style={styles.okTxt}>{words.length} words timed - play video to see live captions!</Text></View>}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, { backgroundColor: '#4CD964' }]} onPress={() => setShowExport(true)}>
+                <Text style={styles.btnTxt}>Export Video</Text>
+              </TouchableOpacity>
+            )}
             {!loading && !showEdit && <TouchableOpacity style={[styles.btn, styles.editBtn]} onPress={() => setShowEdit(true)}><Text style={styles.btnTxt}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text></TouchableOpacity>}
             {showEdit && <View style={styles.editBox}>
               <Text style={styles.label}>Edit your caption text below:</Text>
@@ -129,6 +166,44 @@ function AppContent() {
         )}
       </ScrollView>
     </KeyboardAvoidingView>
+      <Modal visible={showExport} transparent animationType="slide">
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#0B132B', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 }}>
+            <Text style={{ color: '#FFD700', fontSize: 22, fontWeight: '800', marginBottom: 20, textAlign: 'center' }}>Export Video</Text>
+            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600', marginBottom: 10 }}>Resolution:</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {['1080p', '4K'].map(r => (
+                <TouchableOpacity key={r} onPress={() => setResolution(r)} style={{ backgroundColor: r === resolution ? '#FFD700' : '#1C2541', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 8 }}>
+                  <Text style={{ color: r === resolution ? '#0B132B' : '#FFFFFF', fontWeight: '600' }}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '600', marginBottom: 10 }}>Frame Rate:</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 24 }}>
+              {[10, 20, 30, 40, 50, 60].map(f => (
+                <TouchableOpacity key={f} onPress={() => setFps(f)} style={{ backgroundColor: f === fps ? '#FFD700' : '#1C2541', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8 }}>
+                  <Text style={{ color: f === fps ? '#0B132B' : '#FFFFFF', fontWeight: '600' }}>{f}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {exporting ? (
+              <View style={{ alignItems: 'center', padding: 20 }}>
+                <ActivityIndicator color="#FFD700" size="large" />
+                <Text style={{ color: '#FFFFFF', fontSize: 15, marginTop: 12 }}>Exporting... Please wait</Text>
+              </View>
+            ) : (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <TouchableOpacity onPress={() => setShowExport(false)} style={{ backgroundColor: '#888', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 10 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={exportVideo} style={{ backgroundColor: '#4CD964', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 10 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Export {resolution} {fps}fps</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
   );
 }
 

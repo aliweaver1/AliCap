@@ -12,6 +12,9 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		FD6B2162C8AEEC39C6FE7191 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		AC72B15E796F444620B22AEE /* AliCapsExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA08BCF3763BDD4516865635 /* AliCapsExporter.swift */; };
+		AD5874002DE0A249B8B41FF6 /* AliCapsExporter.m in Sources */ = {isa = PBXBuildFile; fileRef = AB09FC175126884E49989B6F /* AliCapsExporter.m */; };
+		AF1EA47CDAD4CC4D00A6E109 /* AliCapsExporter-Bridging-Header.h in Headers */ = {isa = PBXBuildFile; fileRef = AE57DA0AA50AE1428B838170 /* AliCapsExporter-Bridging-Header.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,6 +28,9 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CaptionApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CaptionApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		AA08BCF3763BDD4516865635 /* AliCapsExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AliCapsExporter.swift; path = ../AliCapsExporter/AliCapsExporter.swift; sourceTree = "<group>"; };
+		AB09FC175126884E49989B6F /* AliCapsExporter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AliCapsExporter.m; path = ../AliCapsExporter/AliCapsExporter.m; sourceTree = "<group>"; };
+		AE57DA0AA50AE1428B838170 /* AliCapsExporter-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "AliCapsExporter-Bridging-Header.h"; path = "CaptionApp/AliCapsExporter-Bridging-Header.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -277,6 +283,7 @@
 				PRODUCT_NAME = CaptionApp;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_OBJC_BRIDGING_HEADER = "CaptionApp/AliCapsExporter-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VERSIONING_SYSTEM = "apple-generic";
