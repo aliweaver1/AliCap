@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { NativeModules, Alert, Modal } from 'react-native';
-const AliCapsExporter = NativeModules.AliCapsExporter;
+const AliCapsExporter = NativeModules.AliCapsExporter || null;
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -100,6 +100,9 @@ function AppContent() {
           end: chunk[chunk.length - 1].end,
         });
         i += 5;
+      }
+      if (!AliCapsExporter) {
+        throw new Error('Export module not available');
       }
       await AliCapsExporter.exportVideo(cleanPath, captions, resolution, fps);
       setExporting(false);
