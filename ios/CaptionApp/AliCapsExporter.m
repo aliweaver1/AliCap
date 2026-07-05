@@ -53,43 +53,78 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     CALayer *videoLayer = [CALayer layer];
     videoLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
     [parentLayer addSublayer:videoLayer];
-    
-    // Caption layers with timing animations
+
+    // Single caption layer with keyframe animation
+    CATextLayer *captionLayer = [CATextLayer layer];
+    captionLayer.fontSize = outputSize.width / 22.0;
+    captionLayer.foregroundColor = [UIColor whiteColor].CGColor;
+    captionLayer.alignmentMode = kCAAlignmentCenter;
+    captionLayer.wrapped = YES;
+    captionLayer.contentsScale = 2.0;
+    captionLayer.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8].CGColor;
+    captionLayer.cornerRadius = 8;
+    CGFloat w = outputSize.width * 0.88;
+    CGFloat h = outputSize.height * 0.08;
+    CGFloat y = outputSize.height * 0.06;
+    captionLayer.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
+    captionLayer.opacity = 0;
+    [parentLayer addSublayer:captionLayer];
+
+    // Build keyframe values for opacity and string
+    NSMutableArray *opacityValues = [NSMutableArray array];
+    NSMutableArray *opacityTimes = [NSMutableArray array];
+    NSMutableArray *stringValues = [NSMutableArray array];
+    NSMutableArray *stringTimes = [NSMutableArray array];
+
+    // Start with opacity 0
+    [opacityValues addObject:@0];
+    [opacityTimes addObject:@0];
+    [stringValues addObject:@""];
+    [stringTimes addObject:@0];
+
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
       double start = [cap[@"start"] doubleValue];
       double end = [cap[@"end"] doubleValue];
       if (!text || text.length == 0) continue;
-      
-      CATextLayer *tl = [CATextLayer layer];
-      tl.string = text;
-      tl.fontSize = outputSize.width / 18.0;
-      tl.foregroundColor = [UIColor whiteColor].CGColor;
-      tl.alignmentMode = kCAAlignmentCenter;
-      tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.85].CGColor;
-      tl.cornerRadius = 12;
-      tl.wrapped = YES;
-      tl.contentsScale = 2.0;
-      
-      CGFloat w = outputSize.width * 0.9;
-      CGFloat h = outputSize.height * 0.18;
-      // Bottom of video
-      CGFloat y = outputSize.height * 0.05;
-      tl.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
-      tl.opacity = 0;
-      
-      // Use CABasicAnimation for show period
-      CABasicAnimation *showAnim = [CABasicAnimation animationWithKeyPath:@"opacity"];
-      showAnim.fromValue = @1;
-      showAnim.toValue = @1;
-      showAnim.beginTime = start;
-      showAnim.duration = end - start;
-      showAnim.fillMode = kCAFillModeBoth;
-      showAnim.removedOnCompletion = NO;
-      [tl addAnimation:showAnim forKey:@"show"];
-      
-      [parentLayer addSublayer:tl];
+
+      double startN = start / totalDur;
+      double endN = end / totalDur;
+
+      // Show caption
+      [stringValues addObject:text];
+      [stringTimes addObject:@(startN)];
+      [opacityValues addObject:@1];
+      [opacityTimes addObject:@(startN)];
+
+      // Hide caption
+      [opacityValues addObject:@0];
+      [opacityTimes addObject:@(endN)];
+      [stringValues addObject:@""];
+      [stringTimes addObject:@(endN)];
     }
+
+    // End
+    [opacityValues addObject:@0];
+    [opacityTimes addObject:@1];
+
+    CAKeyframeAnimation *opacityAnim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
+    opacityAnim.values = opacityValues;
+    opacityAnim.keyTimes = opacityTimes;
+    opacityAnim.duration = totalDur;
+    opacityAnim.calculationMode = kCAAnimationDiscrete;
+    opacityAnim.fillMode = kCAFillModeBoth;
+    opacityAnim.removedOnCompletion = NO;
+    [captionLayer addAnimation:opacityAnim forKey:@"opacity"];
+
+    CAKeyframeAnimation *stringAnim = [CAKeyframeAnimation animationWithKeyPath:@"string"];
+    stringAnim.values = stringValues;
+    stringAnim.keyTimes = stringTimes;
+    stringAnim.duration = totalDur;
+    stringAnim.calculationMode = kCAAnimationDiscrete;
+    stringAnim.fillMode = kCAFillModeBoth;
+    stringAnim.removedOnCompletion = NO;
+    [captionLayer addAnimation:stringAnim forKey:@"string"];
     
     AVMutableVideoComposition *videoComp = [AVMutableVideoComposition videoComposition];
     videoComp.frameDuration = CMTimeMake(1, [fps intValue]);
