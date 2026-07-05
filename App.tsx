@@ -88,12 +88,29 @@ function AppContent() {
       .catch((e: any) => { console.log(e); });
   };
 
-  const exportVideo = () => {
-    Alert.alert(
-      'Export ' + resolution + ' ' + fps + 'fps',
-      'Export feature is being finalized. Stay tuned!',
-      [{ text: 'OK', onPress: () => setShowExport(false) }]
-    );
+  const exportVideo = async () => {
+    const { NativeModules } = require('react-native');
+    const exporter = NativeModules.AliCapsExporter;
+    if (!exporter) {
+      Alert.alert('Error', 'Export module not loaded');
+      return;
+    }
+    setShowExport(false);
+    Alert.alert('Exporting...', 'Please wait while your video is being exported.');
+    try {
+      const cleanPath = videoPath ? (videoPath.startsWith('file://') ? videoPath.replace('file://', '') : videoPath) : '';
+      const captions: any[] = [];
+      let i = 0;
+      while (i < words.length) {
+        const chunk = words.slice(i, i + 5);
+        captions.push({ text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '), start: chunk[0].start, end: chunk[chunk.length-1].end });
+        i += 5;
+      }
+      await exporter.exportVideo(cleanPath, captions, resolution, fps);
+      Alert.alert('Done!', 'Video saved to Camera Roll!');
+    } catch (e: any) {
+      Alert.alert('Export Failed', String(e?.message || e));
+    }
   };
 
   return (
