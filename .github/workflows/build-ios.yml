@@ -39,7 +39,7 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             DEVELOPMENT_TEAM="" \
             -derivedDataPath build \
-            clean build 2>&1 | grep -v "^note:" | grep -v "warning:" || true
+            clean build
 
       - name: Package app into IPA
         run: |
