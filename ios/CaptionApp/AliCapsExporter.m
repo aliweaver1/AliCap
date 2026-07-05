@@ -115,7 +115,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       anim.values = values;
       anim.keyTimes = times;
       anim.duration = totalDur;
-      anim.calculationMode = kCAAnimationDiscrete;
+      anim.calculationMode = kCAAnimationLinear;
       anim.fillMode = kCAFillModeBoth;
       anim.removedOnCompletion = NO;
       
