@@ -99,12 +99,24 @@ function AppContent() {
     Alert.alert('Exporting...', 'Please wait while your video is being exported.');
     try {
       const cleanPath = videoPath ? (videoPath.startsWith('file://') ? videoPath.replace('file://', '') : videoPath) : '';
+      // Group words into 2-second caption windows
       const captions: any[] = [];
       let i = 0;
       while (i < words.length) {
-        const chunk = words.slice(i, i + 3);
-        captions.push({ text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '), start: chunk[0].start, end: chunk[chunk.length-1].end });
-        i += 3;
+        const windowStart = words[i].start;
+        const windowEnd = windowStart + 2.0;
+        const chunk: W[] = [];
+        while (i < words.length && words[i].start < windowEnd) {
+          chunk.push(words[i]);
+          i++;
+        }
+        if (chunk.length > 0) {
+          captions.push({
+            text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '),
+            start: chunk[0].start,
+            end: chunk[chunk.length-1].end
+          });
+        }
       }
       await exporter.exportVideo(cleanPath, captions, resolution, fps);
       Alert.alert('Done!', 'Video saved to Camera Roll!');
