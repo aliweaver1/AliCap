@@ -53,18 +53,18 @@ class AliCapsExporter: NSObject {
         tl.frame = CGRect(x: (outputSize.width - w) / 2, y: outputSize.height * 0.08, width: w, height: h)
         tl.opacity = 0
         let totalDur = CMTimeGetSeconds(dur)
-        let appear = CAKeyframeAnimation(keyPath: "opacity")
-        appear.values = [0, 1, 1, 0]
-        appear.keyTimes = [
+        let anim = CAKeyframeAnimation(keyPath: "opacity")
+        anim.values = [0, 1, 1, 0]
+        anim.keyTimes = [
           NSNumber(value: max(0, start - 0.05) / totalDur),
           NSNumber(value: start / totalDur),
           NSNumber(value: end / totalDur),
           NSNumber(value: min(1, (end + 0.05) / totalDur))
         ]
-        appear.duration = totalDur
-        appear.isRemovedOnCompletion = false
-        appear.fillMode = .forwards
-        tl.add(appear, forKey: "opacity")
+        anim.duration = totalDur
+        anim.isRemovedOnCompletion = false
+        anim.fillMode = .forwards
+        tl.add(anim, forKey: "opacity")
         overlayLayer.addSublayer(tl)
       }
       let parentLayer = CALayer()
