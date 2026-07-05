@@ -54,77 +54,74 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     videoLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
     [parentLayer addSublayer:videoLayer];
 
-    // Single caption layer with keyframe animation
-    CATextLayer *captionLayer = [CATextLayer layer];
-    captionLayer.fontSize = outputSize.width / 22.0;
-    captionLayer.foregroundColor = [UIColor whiteColor].CGColor;
-    captionLayer.alignmentMode = kCAAlignmentCenter;
-    captionLayer.wrapped = YES;
-    captionLayer.contentsScale = 2.0;
-    captionLayer.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8].CGColor;
-    captionLayer.cornerRadius = 8;
+    CGFloat fontSize = outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
-    CGFloat h = outputSize.height * 0.08;
-    CGFloat y = outputSize.height * 0.06;
-    captionLayer.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
-    captionLayer.opacity = 0;
-    [parentLayer addSublayer:captionLayer];
+    CGFloat h = outputSize.height * 0.10;
+    CGFloat y = outputSize.height * 0.05;
 
-    // Build keyframe values for opacity and string
-    NSMutableArray *opacityValues = [NSMutableArray array];
-    NSMutableArray *opacityTimes = [NSMutableArray array];
-    NSMutableArray *stringValues = [NSMutableArray array];
-    NSMutableArray *stringTimes = [NSMutableArray array];
-
-    // Start with opacity 0
-    [opacityValues addObject:@0];
-    [opacityTimes addObject:@0];
-    [stringValues addObject:@""];
-    [stringTimes addObject:@0];
-
+    // Create separate layer for each caption with opacity keyframes
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
       double start = [cap[@"start"] doubleValue];
       double end = [cap[@"end"] doubleValue];
       if (!text || text.length == 0) continue;
+      if (end <= start) end = start + 0.5;
 
       double startN = start / totalDur;
       double endN = end / totalDur;
+      
+      // Clamp values
+      startN = MAX(0.0, MIN(1.0, startN));
+      endN = MAX(0.0, MIN(1.0, endN));
+      if (endN <= startN) endN = MIN(1.0, startN + 0.01);
 
-      // Show caption
-      [stringValues addObject:text];
-      [stringTimes addObject:@(startN)];
-      [opacityValues addObject:@1];
-      [opacityTimes addObject:@(startN)];
+      CATextLayer *tl = [CATextLayer layer];
+      tl.string = text;
+      tl.fontSize = fontSize;
+      tl.foregroundColor = [UIColor whiteColor].CGColor;
+      tl.alignmentMode = kCAAlignmentCenter;
+      tl.wrapped = YES;
+      tl.contentsScale = 2.0;
+      tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8].CGColor;
+      tl.cornerRadius = 8;
+      tl.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
+      tl.opacity = 0;
 
-      // Hide caption
-      [opacityValues addObject:@0];
-      [opacityTimes addObject:@(endN)];
-      [stringValues addObject:@""];
-      [stringTimes addObject:@(endN)];
+      // Keyframe: 0 -> 0 (before) -> 1 (at start) -> 1 (at end) -> 0 (after)
+      CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
+      
+      NSMutableArray *values = [NSMutableArray array];
+      NSMutableArray *times = [NSMutableArray array];
+      
+      if (startN > 0) {
+        [values addObject:@0];
+        [times addObject:@0];
+      }
+      
+      [values addObject:@1];
+      [times addObject:@(startN)];
+      
+      [values addObject:@1];
+      [times addObject:@(endN)];
+      
+      if (endN < 1.0) {
+        [values addObject:@0];
+        [times addObject:@(MIN(1.0, endN + 0.001))];
+        
+        [values addObject:@0];
+        [times addObject:@1];
+      }
+      
+      anim.values = values;
+      anim.keyTimes = times;
+      anim.duration = totalDur;
+      anim.calculationMode = kCAAnimationDiscrete;
+      anim.fillMode = kCAFillModeBoth;
+      anim.removedOnCompletion = NO;
+      
+      [tl addAnimation:anim forKey:@"opacity"];
+      [parentLayer addSublayer:tl];
     }
-
-    // End
-    [opacityValues addObject:@0];
-    [opacityTimes addObject:@1];
-
-    CAKeyframeAnimation *opacityAnim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
-    opacityAnim.values = opacityValues;
-    opacityAnim.keyTimes = opacityTimes;
-    opacityAnim.duration = totalDur;
-    opacityAnim.calculationMode = kCAAnimationDiscrete;
-    opacityAnim.fillMode = kCAFillModeBoth;
-    opacityAnim.removedOnCompletion = NO;
-    [captionLayer addAnimation:opacityAnim forKey:@"opacity"];
-
-    CAKeyframeAnimation *stringAnim = [CAKeyframeAnimation animationWithKeyPath:@"string"];
-    stringAnim.values = stringValues;
-    stringAnim.keyTimes = stringTimes;
-    stringAnim.duration = totalDur;
-    stringAnim.calculationMode = kCAAnimationDiscrete;
-    stringAnim.fillMode = kCAFillModeBoth;
-    stringAnim.removedOnCompletion = NO;
-    [captionLayer addAnimation:stringAnim forKey:@"string"];
     
     AVMutableVideoComposition *videoComp = [AVMutableVideoComposition videoComposition];
     videoComp.frameDuration = CMTimeMake(1, [fps intValue]);
