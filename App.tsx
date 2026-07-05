@@ -102,9 +102,9 @@ function AppContent() {
       const captions: any[] = [];
       let i = 0;
       while (i < words.length) {
-        const chunk = words.slice(i, i + 5);
+        const chunk = words.slice(i, i + 3);
         captions.push({ text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '), start: chunk[0].start, end: chunk[chunk.length-1].end });
-        i += 5;
+        i += 3;
       }
       await exporter.exportVideo(cleanPath, captions, resolution, fps);
       Alert.alert('Done!', 'Video saved to Camera Roll!');
