@@ -1,5 +1,5 @@
 /**
- * AliCaps - Live Captions + 10 Styles
+ * AliCaps - Live Captions + 10 Styles + Export
  * @format
  */
 
@@ -7,7 +7,7 @@ import React, { useState } from 'react';
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
-  Platform, ActivityIndicator,
+  Platform, ActivityIndicator, Alert, Modal,
 } from 'react-native';
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
@@ -53,7 +53,6 @@ function AppContent() {
   const [showExport, setShowExport] = useState<boolean>(false);
   const [resolution, setResolution] = useState<string>('1080p');
   const [fps, setFps] = useState<number>(30);
-  const [exporting, setExporting] = useState<boolean>(false);
 
   const currentStyle = STYLES.find(s => s.id === styleId) || STYLES[0];
 
@@ -83,110 +82,104 @@ function AppContent() {
     } finally { setLoading(false); }
   };
 
-  const exportVideo = async () => {
-    setExporting(true);
-    setTimeout(() => {
-      setExporting(false);
-      setShowExport(false);
-      Alert.alert('Coming Soon', 'Export feature will be available soon!');
-    }, 1000);
-  };
-
   const pickVideo = () => {
     ImagePicker.openPicker({ mediaType: 'video' })
       .then((v: any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
       .catch((e: any) => { console.log(e); });
   };
 
+  const exportVideo = () => {
+    Alert.alert(
+      'Export ' + resolution + ' ' + fps + 'fps',
+      'Export feature is being finalized. Stay tuned!',
+      [{ text: 'OK', onPress: () => setShowExport(false) }]
+    );
+  };
+
   return (
-    <>
-    <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>AliCaps</Text>
-        {videoPath ? (
-          <View style={styles.previewContainer}>
-            <View style={styles.videoWrapper}>
-              <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} onProgress={onProgress} />
-              {cap.length > 0 && (
-                <View style={styles.capOverlay} pointerEvents="none">
-                  <View style={{ backgroundColor: currentStyle.bg, borderRadius: currentStyle.br, paddingHorizontal: 14, paddingVertical: 8, maxWidth: '90%' }}>
-                    <Text style={{ color: currentStyle.color, fontSize: currentStyle.fs, fontWeight: currentStyle.fw as any, textAlign: 'center', lineHeight: currentStyle.fs + 8 }}>{cap}</Text>
+    <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView style={styles.flexFull} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.content}>
+          <Text style={styles.title}>AliCaps</Text>
+          {videoPath ? (
+            <View style={styles.previewContainer}>
+              <View style={styles.videoWrapper}>
+                <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} onProgress={onProgress} />
+                {cap.length > 0 && (
+                  <View style={styles.capOverlay} pointerEvents="none">
+                    <View style={{ backgroundColor: currentStyle.bg, borderRadius: currentStyle.br, paddingHorizontal: 14, paddingVertical: 8, maxWidth: '90%' }}>
+                      <Text style={{ color: currentStyle.color, fontSize: currentStyle.fs, fontWeight: currentStyle.fw as any, textAlign: 'center', lineHeight: currentStyle.fs + 8 }}>{cap}</Text>
+                    </View>
                   </View>
+                )}
+              </View>
+              <TouchableOpacity style={[styles.btn, styles.styleBtn]} onPress={() => setShowStylePicker(!showStylePicker)}>
+                <Text style={styles.btnTxt}>Style: {currentStyle.name} {showStylePicker ? 'A' : 'V'}</Text>
+              </TouchableOpacity>
+              {showStylePicker && (
+                <View style={styles.stylePicker}>
+                  {STYLES.map(s => (
+                    <TouchableOpacity key={s.id} style={[styles.styleOption, s.id === styleId && styles.styleOptionActive]} onPress={() => { setStyleId(s.id); setShowStylePicker(false); }}>
+                      <Text style={[styles.styleOptionTxt, s.id === styleId && styles.styleOptionTxtActive]}>{s.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {!loading && words.length > 0 && (
+                <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={() => setShowExport(true)}>
+                  <Text style={styles.btnTxt}>Export Video</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity style={styles.btn} onPress={pickVideo}><Text style={styles.btnTxt}>Choose a different video</Text></TouchableOpacity>
+              {loading && <View style={styles.infoBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.infoTxt}>Listening to your video...</Text></View>}
+              {err && <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View>}
+              {!loading && words.length > 0 && <View style={styles.okBox}><Text style={styles.okTxt}>{words.length} words timed - play video to see live captions!</Text></View>}
+              {!loading && !showEdit && <TouchableOpacity style={[styles.btn, styles.editBtn]} onPress={() => setShowEdit(true)}><Text style={styles.btnTxt}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text></TouchableOpacity>}
+              {showEdit && (
+                <View style={styles.editBox}>
+                  <Text style={styles.label}>Edit your caption text below:</Text>
+                  <TextInput style={styles.input} multiline placeholder="Type captions..." placeholderTextColor="#7A8499" value={captionText} onChangeText={setCaptionText} textAlignVertical="top" />
+                  <TouchableOpacity style={[styles.btn, styles.doneBtn]} onPress={() => setShowEdit(false)}><Text style={styles.btnTxt}>Done</Text></TouchableOpacity>
                 </View>
               )}
             </View>
-            <TouchableOpacity style={[styles.btn, styles.styleBtn]} onPress={() => setShowStylePicker(!showStylePicker)}>
-              <Text style={styles.btnTxt}>Style: {currentStyle.name} {showStylePicker ? 'A' : 'V'}</Text>
-            </TouchableOpacity>
-            {showStylePicker && (
-              <View style={styles.stylePicker}>
-                {STYLES.map(s => (
-                  <TouchableOpacity key={s.id} style={[styles.styleOption, s.id === styleId && styles.styleOptionActive]} onPress={() => { setStyleId(s.id); setShowStylePicker(false); }}>
-                    <Text style={[styles.styleOptionTxt, s.id === styleId && styles.styleOptionTxtActive]}>{s.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-            <TouchableOpacity style={styles.btn} onPress={pickVideo}><Text style={styles.btnTxt}>Choose a different video</Text></TouchableOpacity>
-            {loading && <View style={styles.infoBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.infoTxt}>Listening to your video...</Text></View>}
-            {err && <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View>}
-            {!loading && words.length > 0 && <View style={styles.okBox}><Text style={styles.okTxt}>{words.length} words timed - play video to see live captions!</Text></View>}
-            {!loading && words.length > 0 && (
-              <TouchableOpacity style={[styles.btn, {backgroundColor: '#4CD964'}]} onPress={() => setShowExport(true)}>
-                <Text style={styles.btnTxt}>Export Video</Text>
+          ) : (
+            <TouchableOpacity style={styles.btn} onPress={pickVideo}><Text style={styles.btnTxt}>Select Video</Text></TouchableOpacity>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+      <Modal visible={showExport} transparent animationType="slide" onRequestClose={() => setShowExport(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Export Video</Text>
+            <Text style={styles.modalLabel}>Resolution:</Text>
+            <View style={styles.optRow}>
+              {['1080p', '4K'].map(r => (
+                <TouchableOpacity key={r} onPress={() => setResolution(r)} style={[styles.optBtn, r === resolution && styles.optBtnActive]}>
+                  <Text style={[styles.optTxt, r === resolution && styles.optTxtActive]}>{r}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <Text style={styles.modalLabel}>Frame Rate:</Text>
+            <View style={styles.optRow}>
+              {[10, 20, 30, 40, 50, 60].map(f => (
+                <TouchableOpacity key={f} onPress={() => setFps(f)} style={[styles.optBtn, f === fps && styles.optBtnActive]}>
+                  <Text style={[styles.optTxt, f === fps && styles.optTxtActive]}>{f}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <View style={styles.modalBtns}>
+              <TouchableOpacity onPress={() => setShowExport(false)} style={[styles.btn, { backgroundColor: '#888' }]}>
+                <Text style={styles.btnTxt}>Cancel</Text>
               </TouchableOpacity>
-            )}
-            {!loading && !showEdit && <TouchableOpacity style={[styles.btn, styles.editBtn]} onPress={() => setShowEdit(true)}><Text style={styles.btnTxt}>{captionText ? 'Edit Captions' : 'Add Captions Manually'}</Text></TouchableOpacity>}
-            {showEdit && <View style={styles.editBox}>
-              <Text style={styles.label}>Edit your caption text below:</Text>
-              <TextInput style={styles.input} multiline placeholder="Type captions..." placeholderTextColor="#7A8499" value={captionText} onChangeText={setCaptionText} textAlignVertical="top" />
-              <TouchableOpacity style={[styles.btn, styles.doneBtn]} onPress={() => setShowEdit(false)}><Text style={styles.btnTxt}>Done</Text></TouchableOpacity>
-            </View>}
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.btn} onPress={pickVideo}><Text style={styles.btnTxt}>Select Video</Text></TouchableOpacity>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
-      <Modal visible={showExport} transparent animationType="slide">
-        <View style={{flex:1, backgroundColor:'rgba(0,0,0,0.8)', justifyContent:'flex-end'}}>
-          <View style={{backgroundColor:'#0B132B', borderTopLeftRadius:24, borderTopRightRadius:24, padding:24}}>
-            <Text style={{color:'#FFD700', fontSize:22, fontWeight:'800', marginBottom:20, textAlign:'center'}}>Export Video</Text>
-            <Text style={{color:'#FFFFFF', fontSize:15, fontWeight:'600', marginBottom:10}}>Resolution:</Text>
-            <View style={{flexDirection:'row', gap:8, marginBottom:16}}>
-              {['1080p','4K'].map(r => (
-                <TouchableOpacity key={r} onPress={() => setResolution(r)} style={{backgroundColor: r===resolution ? '#FFD700' : '#1C2541', paddingVertical:10, paddingHorizontal:20, borderRadius:8}}>
-                  <Text style={{color: r===resolution ? '#0B132B' : '#FFFFFF', fontWeight:'600'}}>{r}</Text>
-                </TouchableOpacity>
-              ))}
+              <TouchableOpacity onPress={exportVideo} style={[styles.btn, styles.exportBtn]}>
+                <Text style={styles.btnTxt}>Export {resolution} {fps}fps</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={{color:'#FFFFFF', fontSize:15, fontWeight:'600', marginBottom:10}}>Frame Rate:</Text>
-            <View style={{flexDirection:'row', flexWrap:'wrap', gap:8, marginBottom:24}}>
-              {[10,20,30,40,50,60].map(f => (
-                <TouchableOpacity key={f} onPress={() => setFps(f)} style={{backgroundColor: f===fps ? '#FFD700' : '#1C2541', paddingVertical:10, paddingHorizontal:16, borderRadius:8}}>
-                  <Text style={{color: f===fps ? '#0B132B' : '#FFFFFF', fontWeight:'600'}}>{f}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            {exporting ? (
-              <View style={{alignItems:'center', padding:20}}>
-                <ActivityIndicator color="#FFD700" size="large" />
-                <Text style={{color:'#FFFFFF', fontSize:15, marginTop:12}}>Exporting... Please wait</Text>
-              </View>
-            ) : (
-              <View style={{flexDirection:'row', justifyContent:'space-between'}}>
-                <TouchableOpacity onPress={() => setShowExport(false)} style={{backgroundColor:'#888', paddingVertical:14, paddingHorizontal:28, borderRadius:10}}>
-                  <Text style={{color:'#FFFFFF', fontWeight:'600'}}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={exportVideo} style={{backgroundColor:'#4CD964', paddingVertical:14, paddingHorizontal:20, borderRadius:10}}>
-                  <Text style={{color:'#FFFFFF', fontWeight:'600'}}>Export {resolution} {fps}fps</Text>
-                </TouchableOpacity>
-              </View>
-            )}
           </View>
         </View>
       </Modal>
-    </>
+    </SafeAreaView>
   );
 }
 
@@ -198,6 +191,7 @@ const styles = StyleSheet.create({
   btn: { backgroundColor: '#FFD700', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 10, marginTop: 16 },
   styleBtn: { backgroundColor: '#3A4374' },
   editBtn: { backgroundColor: '#4CC3FF' },
+  exportBtn: { backgroundColor: '#4CD964' },
   doneBtn: { backgroundColor: '#4CD964', alignSelf: 'flex-end' },
   btnTxt: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', textAlign: 'center' },
   previewContainer: { width: '100%', alignItems: 'center' },
@@ -218,6 +212,16 @@ const styles = StyleSheet.create({
   editBox: { width: '100%', marginTop: 20 },
   label: { color: '#FFFFFF', fontSize: 13, marginBottom: 10, opacity: 0.8 },
   input: { width: '100%', minHeight: 140, backgroundColor: '#1C2541', color: '#FFFFFF', borderRadius: 10, padding: 14, fontSize: 16, borderWidth: 1, borderColor: '#3A4374' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  modalBox: { backgroundColor: '#0B132B', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  modalTitle: { color: '#FFD700', fontSize: 22, fontWeight: '800', marginBottom: 20, textAlign: 'center' },
+  modalLabel: { color: '#FFFFFF', fontSize: 15, fontWeight: '600', marginBottom: 10, marginTop: 16 },
+  optRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  optBtn: { backgroundColor: '#1C2541', paddingVertical: 10, paddingHorizontal: 16, borderRadius: 8, borderWidth: 1, borderColor: '#3A4374' },
+  optBtnActive: { backgroundColor: '#FFD700', borderColor: '#FFD700' },
+  optTxt: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
+  optTxtActive: { color: '#0B132B' },
+  modalBtns: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 24 },
 });
 
 export default App;
