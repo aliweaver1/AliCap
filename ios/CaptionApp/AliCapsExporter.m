@@ -59,21 +59,12 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     CGFloat h = outputSize.height * 0.10;
     CGFloat y = outputSize.height * 0.05;
 
-    // Create separate layer for each caption with opacity keyframes
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
       double start = [cap[@"start"] doubleValue];
       double end = [cap[@"end"] doubleValue];
       if (!text || text.length == 0) continue;
       if (end <= start) end = start + 0.5;
-
-      double startN = start / totalDur;
-      double endN = end / totalDur;
-      
-      // Clamp values
-      startN = MAX(0.0, MIN(1.0, startN));
-      endN = MAX(0.0, MIN(1.0, endN));
-      if (endN <= startN) endN = MIN(1.0, startN + 0.01);
 
       CATextLayer *tl = [CATextLayer layer];
       tl.string = text;
@@ -87,39 +78,16 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       tl.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
       tl.opacity = 0;
 
-      // Keyframe: 0 -> 0 (before) -> 1 (at start) -> 1 (at end) -> 0 (after)
-      CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
-      
-      NSMutableArray *values = [NSMutableArray array];
-      NSMutableArray *times = [NSMutableArray array];
-      
-      if (startN > 0) {
-        [values addObject:@0];
-        [times addObject:@0];
-      }
-      
-      [values addObject:@1];
-      [times addObject:@(startN)];
-      
-      [values addObject:@1];
-      [times addObject:@(endN)];
-      
-      if (endN < 1.0) {
-        [values addObject:@0];
-        [times addObject:@(MIN(1.0, endN + 0.001))];
-        
-        [values addObject:@0];
-        [times addObject:@1];
-      }
-      
-      anim.values = values;
-      anim.keyTimes = times;
-      anim.duration = totalDur;
-      anim.calculationMode = kCAAnimationLinear;
-      anim.fillMode = kCAFillModeBoth;
-      anim.removedOnCompletion = NO;
-      
-      [tl addAnimation:anim forKey:@"opacity"];
+      // Show animation: start time to end time
+      CABasicAnimation *showAnim = [CABasicAnimation animationWithKeyPath:@"opacity"];
+      showAnim.fromValue = @1;
+      showAnim.toValue = @1;
+      showAnim.beginTime = start;
+      showAnim.duration = end - start;
+      showAnim.fillMode = kCAFillModeRemoved;
+      showAnim.removedOnCompletion = YES;
+      [tl addAnimation:showAnim forKey:[NSString stringWithFormat:@"show_%f", start]];
+
       [parentLayer addSublayer:tl];
     }
     
