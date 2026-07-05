@@ -26,7 +26,7 @@
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = CaptionApp/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = CaptionApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		CC000001000000000000AAA2 /* AliCapsExporter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AliCapsExporter.m; path = AliCapsExporter.m; sourceTree = "<group>"; };
+		CC000001000000000000AAA2 /* AliCapsExporter.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = AliCapsExporter.m; path = CaptionApp/AliCapsExporter.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
