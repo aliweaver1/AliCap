@@ -22,21 +22,17 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     AVAssetTrack *vTrack = [[asset tracksWithMediaType:AVMediaTypeVideo] firstObject];
     if (!vTrack) { reject(@"ERR", @"No video track", nil); return; }
 
-    // Use original video size - just apply transform
     CGSize naturalSize = vTrack.naturalSize;
     CGAffineTransform txForm = vTrack.preferredTransform;
     CGSize transformedSize = CGSizeApplyAffineTransform(naturalSize, txForm);
     CGSize videoSize = CGSizeMake(ABS(transformedSize.width), ABS(transformedSize.height));
     
-    // Output size based on resolution keeping aspect ratio
     CGSize outputSize;
     if ([resolution isEqualToString:@"4K"]) {
-      outputSize = CGSizeMake(3840, 3840 * videoSize.height / videoSize.width);
+      outputSize = CGSizeMake(3840, floor(3840 * videoSize.height / videoSize.width / 2) * 2);
     } else {
-      outputSize = CGSizeMake(1080, 1080 * videoSize.height / videoSize.width);
+      outputSize = CGSizeMake(1080, floor(1080 * videoSize.height / videoSize.width / 2) * 2);
     }
-    // Round to even numbers
-    outputSize = CGSizeMake(floor(outputSize.width / 2) * 2, floor(outputSize.height / 2) * 2);
 
     AVMutableComposition *composition = [AVMutableComposition composition];
     AVMutableCompositionTrack *compV = [composition addMutableTrackWithMediaType:AVMediaTypeVideo preferredTrackID:kCMPersistentTrackID_Invalid];
@@ -58,11 +54,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     videoLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
     [parentLayer addSublayer:videoLayer];
     
-    CALayer *overlayLayer = [CALayer layer];
-    overlayLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
-    overlayLayer.geometryFlipped = YES;
-    [parentLayer addSublayer:overlayLayer];
-    
+    // Caption layers with timing animations
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
       double start = [cap[@"start"] doubleValue];
@@ -74,29 +66,29 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       tl.fontSize = outputSize.width / 18.0;
       tl.foregroundColor = [UIColor whiteColor].CGColor;
       tl.alignmentMode = kCAAlignmentCenter;
-      tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8].CGColor;
+      tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.85].CGColor;
       tl.cornerRadius = 12;
       tl.wrapped = YES;
+      tl.contentsScale = 2.0;
       
       CGFloat w = outputSize.width * 0.9;
-      CGFloat h = outputSize.height * 0.15;
+      CGFloat h = outputSize.height * 0.18;
+      // Bottom of video
       CGFloat y = outputSize.height * 0.05;
-      tl.frame = CGRectMake((outputSize.width - w) / 2, y, w, h);
+      tl.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
       tl.opacity = 0;
       
-      CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
-      anim.values = @[@0, @1, @1, @0];
-      anim.keyTimes = @[
-        @(MAX(0, (start - 0.05) / totalDur)),
-        @(start / totalDur),
-        @(end / totalDur),
-        @(MIN(1, (end + 0.05) / totalDur))
-      ];
-      anim.duration = totalDur;
-      anim.removedOnCompletion = NO;
-      anim.fillMode = kCAFillModeForwards;
-      [tl addAnimation:anim forKey:@"opacity"];
-      [overlayLayer addSublayer:tl];
+      // Use CABasicAnimation for show period
+      CABasicAnimation *showAnim = [CABasicAnimation animationWithKeyPath:@"opacity"];
+      showAnim.fromValue = @1;
+      showAnim.toValue = @1;
+      showAnim.beginTime = start;
+      showAnim.duration = end - start;
+      showAnim.fillMode = kCAFillModeBoth;
+      showAnim.removedOnCompletion = NO;
+      [tl addAnimation:showAnim forKey:@"show"];
+      
+      [parentLayer addSublayer:tl];
     }
     
     AVMutableVideoComposition *videoComp = [AVMutableVideoComposition videoComposition];
