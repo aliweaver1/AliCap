@@ -37,15 +37,20 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       [compA insertTimeRange:CMTimeRangeMake(kCMTimeZero, dur) ofTrack:aTrack atTime:kCMTimeZero error:nil];
     }
     
-    // Caption layers
+    Float64 totalDur = CMTimeGetSeconds(dur);
+    
+    // Parent layer - no geometry flip
+    CALayer *parentLayer = [CALayer layer];
+    parentLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
+    
     CALayer *videoLayer = [CALayer layer];
     videoLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
+    [parentLayer addSublayer:videoLayer];
     
+    // Caption overlay - geometry flipped so bottom = bottom of video
     CALayer *overlayLayer = [CALayer layer];
     overlayLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
-    overlayLayer.geometryFlipped = YES;
-    
-    Float64 totalDur = CMTimeGetSeconds(dur);
+    [parentLayer addSublayer:overlayLayer];
     
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
@@ -55,7 +60,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       
       CATextLayer *tl = [CATextLayer layer];
       tl.string = text;
-      tl.fontSize = outputSize.width / 28.0;
+      tl.fontSize = outputSize.width / 24.0;
       tl.foregroundColor = [UIColor whiteColor].CGColor;
       tl.alignmentMode = kCAAlignmentCenter;
       tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.75].CGColor;
@@ -63,8 +68,10 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       tl.wrapped = YES;
       
       CGFloat w = outputSize.width * 0.85;
-      CGFloat h = outputSize.height * 0.12;
-      tl.frame = CGRectMake((outputSize.width - w) / 2, outputSize.height * 0.08, w, h);
+      CGFloat h = outputSize.height * 0.15;
+      // Place captions at bottom 15% of video
+      CGFloat y = outputSize.height * 0.08;
+      tl.frame = CGRectMake((outputSize.width - w) / 2, y, w, h);
       tl.opacity = 0;
       
       CAKeyframeAnimation *anim = [CAKeyframeAnimation animationWithKeyPath:@"opacity"];
@@ -81,11 +88,6 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       [tl addAnimation:anim forKey:@"opacity"];
       [overlayLayer addSublayer:tl];
     }
-    
-    CALayer *parentLayer = [CALayer layer];
-    parentLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
-    [parentLayer addSublayer:videoLayer];
-    [parentLayer addSublayer:overlayLayer];
     
     AVMutableVideoComposition *videoComp = [AVMutableVideoComposition videoComposition];
     videoComp.frameDuration = CMTimeMake(1, [fps intValue]);
