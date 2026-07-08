@@ -84,8 +84,8 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       showAnim.toValue = @1;
       showAnim.beginTime = start;
       showAnim.duration = end - start;
-      showAnim.fillMode = kCAFillModeRemoved;
-      showAnim.removedOnCompletion = YES;
+      showAnim.fillMode = kCAFillModeBoth;
+      showAnim.removedOnCompletion = NO;
       [tl addAnimation:showAnim forKey:[NSString stringWithFormat:@"show_%f", start]];
 
       [parentLayer addSublayer:tl];
