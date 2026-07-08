@@ -84,8 +84,18 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       showAnim.toValue = @1;
       showAnim.beginTime = start;
       showAnim.duration = end - start;
-      showAnim.fillMode = kCAFillModeBoth;
+      showAnim.fillMode = kCAFillModeForwards;
       showAnim.removedOnCompletion = NO;
+      
+      // Hide animation at end
+      CABasicAnimation *hideAnim = [CABasicAnimation animationWithKeyPath:@"opacity"];
+      hideAnim.fromValue = @0;
+      hideAnim.toValue = @0;
+      hideAnim.beginTime = end;
+      hideAnim.duration = totalDur - end;
+      hideAnim.fillMode = kCAFillModeForwards;
+      hideAnim.removedOnCompletion = NO;
+      [tl addAnimation:hideAnim forKey:[NSString stringWithFormat:@"hide_%f", end]];
       [tl addAnimation:showAnim forKey:[NSString stringWithFormat:@"show_%f", start]];
 
       [parentLayer addSublayer:tl];
