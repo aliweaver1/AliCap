@@ -55,15 +55,6 @@ function AppContent() {
   const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
   const [captionGroups, setCaptionGroups] = useState<any[]>([]);
   const [captionStyle, setCaptionStyle] = useState<any>(null);
-  const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
-  const [captionGroups, setCaptionGroups] = useState<any[]>([]);
-  const [captionStyle, setCaptionStyle] = useState<any>(null);
-  const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
-  const [captionGroups, setCaptionGroups] = useState<any[]>([]);
-  const [captionStyle, setCaptionStyle] = useState<any>(null);
-  const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
-  const [captionGroups, setCaptionGroups] = useState<any[]>([]);
-  const [captionStyle, setCaptionStyle] = useState<any>(null);
   const [resolution, setResolution] = useState<string>('1080p');
   const [fps, setFps] = useState<number>(30);
 
