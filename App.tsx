@@ -165,13 +165,15 @@ function AppContent() {
                 </View>
               )}
             {!loading && words.length > 0 && (
-                <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
-                  <Text style={styles.btnTxt}>Edit Captions</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={() => setShowExport(true)}>
-                  <Text style={styles.btnTxt}>Export Video</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={() => setShowExport(true)}>
+                <Text style={styles.btnTxt}>Export Video</Text>
+              </TouchableOpacity>
+            )}
               <TouchableOpacity style={styles.btn} onPress={pickVideo}><Text style={styles.btnTxt}>Choose a different video</Text></TouchableOpacity>
               {loading && <View style={styles.infoBox}><ActivityIndicator color="#FFD700" size="small" /><Text style={styles.infoTxt}>Listening to your video...</Text></View>}
               {err && <View style={styles.errBox}><Text style={styles.errTxt}>{err}</Text></View>}
