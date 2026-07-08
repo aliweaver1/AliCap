@@ -165,6 +165,9 @@ function AppContent() {
                 </View>
               )}
             {!loading && words.length > 0 && (
+                <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                  <Text style={styles.btnTxt}>Edit Captions</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={[styles.btn, styles.exportBtn]} onPress={() => setShowExport(true)}>
                   <Text style={styles.btnTxt}>Export Video</Text>
                 </TouchableOpacity>
