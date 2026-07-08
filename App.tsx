@@ -14,6 +14,7 @@ import Video from 'react-native-video';
 import CaptionEditor from './CaptionEditor';
 import CaptionEditor from './CaptionEditor';
 import CaptionEditor from './CaptionEditor';
+import CaptionEditor from './CaptionEditor';
 
 const DG_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
 const DG_KEY = '65774809e8fdb3317afb3ec6dec8913202e05bd7';
@@ -54,6 +55,9 @@ function AppContent() {
   const [styleId, setStyleId] = useState<string>('ali_bold');
   const [showStylePicker, setShowStylePicker] = useState<boolean>(false);
   const [showExport, setShowExport] = useState<boolean>(false);
+  const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
+  const [captionGroups, setCaptionGroups] = useState<any[]>([]);
+  const [captionStyle, setCaptionStyle] = useState<any>(null);
   const [showCaptionEditor, setShowCaptionEditor] = useState<boolean>(false);
   const [captionGroups, setCaptionGroups] = useState<any[]>([]);
   const [captionStyle, setCaptionStyle] = useState<any>(null);
@@ -173,6 +177,46 @@ function AppContent() {
                 </View>
               )}
               {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
+              <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
+                <Text style={styles.btnTxt}>Edit Captions</Text>
+              </TouchableOpacity>
+            )}
+            {!loading && words.length > 0 && (
               <TouchableOpacity style={[styles.btn, {backgroundColor: '#9B59B6'}]} onPress={() => setShowCaptionEditor(true)}>
                 <Text style={styles.btnTxt}>Edit Captions</Text>
               </TouchableOpacity>
