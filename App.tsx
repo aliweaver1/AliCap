@@ -12,9 +12,6 @@ import {
 import ImagePicker from 'react-native-image-crop-picker';
 import Video from 'react-native-video';
 import CaptionEditor from './CaptionEditor';
-import CaptionEditor from './CaptionEditor';
-import CaptionEditor from './CaptionEditor';
-import CaptionEditor from './CaptionEditor';
 
 const DG_URL = 'https://api.deepgram.com/v1/listen?model=nova-3&smart_format=true&punctuate=true';
 const DG_KEY = '65774809e8fdb3317afb3ec6dec8913202e05bd7';
