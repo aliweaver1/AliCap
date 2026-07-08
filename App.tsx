@@ -118,7 +118,13 @@ function AppContent() {
           });
         }
       }
-      await exporter.exportVideo(cleanPath, captions, resolution, fps);
+      const styleInfo = {
+        color: currentStyle.color,
+        fontSize: currentStyle.fs,
+        bgColor: currentStyle.bg,
+        fontWeight: currentStyle.fw,
+      };
+      await exporter.exportVideo(cleanPath, captions, resolution, fps, styleInfo);
       Alert.alert('Done!', 'Video saved to Camera Roll!');
     } catch (e: any) {
       Alert.alert('Export Failed', String(e?.message || e));

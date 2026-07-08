@@ -13,6 +13,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
                   captions:(NSArray *)captions
                   resolution:(NSString *)resolution
                   fps:(nonnull NSNumber *)fps
+                  styleInfo:(NSDictionary *)styleInfo
                   resolve:(RCTPromiseResolveBlock)resolve
                   reject:(RCTPromiseRejectBlock)reject)
 {
@@ -54,6 +55,36 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     videoLayer.frame = CGRectMake(0, 0, outputSize.width, outputSize.height);
     [parentLayer addSublayer:videoLayer];
 
+    // Parse style info
+    NSString *textColor = styleInfo[@"color"] ?: @"#FFFFFF";
+    NSString *bgColor = styleInfo[@"bgColor"] ?: @"rgba(0,0,0,0.8)";
+    
+    // Convert hex color to UIColor
+    UIColor *captionTextColor = [UIColor whiteColor];
+    if ([textColor hasPrefix:@"#"] && textColor.length >= 7) {
+      unsigned rgbValue = 0;
+      NSScanner *scanner = [NSScanner scannerWithString:[textColor substringFromIndex:1]];
+      [scanner scanHexInt:&rgbValue];
+      captionTextColor = [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0
+                                         green:((rgbValue & 0x00FF00) >> 8)/255.0
+                                          blue:(rgbValue & 0x0000FF)/255.0
+                                         alpha:1.0];
+    }
+    
+    // Background color
+    UIColor *captionBgColor = [UIColor colorWithWhite:0 alpha:0.8];
+    if ([bgColor isEqualToString:@"transparent"]) {
+      captionBgColor = [UIColor clearColor];
+    } else if ([bgColor hasPrefix:@"#"]) {
+      unsigned rgbValue = 0;
+      NSScanner *scanner = [NSScanner scannerWithString:[bgColor substringFromIndex:1]];
+      [scanner scanHexInt:&rgbValue];
+      captionBgColor = [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16)/255.0
+                                       green:((rgbValue & 0x00FF00) >> 8)/255.0
+                                        blue:(rgbValue & 0x0000FF)/255.0
+                                       alpha:1.0];
+    }
+    
     CGFloat fontSize = outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
     CGFloat h = outputSize.height * 0.10;
@@ -69,11 +100,11 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       CATextLayer *tl = [CATextLayer layer];
       tl.string = text;
       tl.fontSize = fontSize;
-      tl.foregroundColor = [UIColor whiteColor].CGColor;
+      tl.foregroundColor = captionTextColor.CGColor;
       tl.alignmentMode = kCAAlignmentCenter;
       tl.wrapped = YES;
       tl.contentsScale = 2.0;
-      tl.backgroundColor = [UIColor colorWithWhite:0 alpha:0.8].CGColor;
+      tl.backgroundColor = captionBgColor.CGColor;
       tl.cornerRadius = 8;
       tl.frame = CGRectMake((outputSize.width - w) / 2.0, y, w, h);
       tl.opacity = 0;
