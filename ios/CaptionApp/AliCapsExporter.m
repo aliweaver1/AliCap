@@ -75,7 +75,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     UIColor *captionBgColor = [UIColor colorWithWhite:0 alpha:0.8];
     if ([bgColor isEqualToString:@"transparent"]) {
       captionBgColor = [UIColor clearColor];
-    } else if ([bgColor hasPrefix:@"#"]) {
+    } else if ([bgColor hasPrefix:@"#"] && bgColor.length >= 7) {
       unsigned rgbValue = 0;
       NSScanner *scanner = [NSScanner scannerWithString:[bgColor substringFromIndex:1]];
       [scanner scanHexInt:&rgbValue];
@@ -83,6 +83,17 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
                                        green:((rgbValue & 0x00FF00) >> 8)/255.0
                                         blue:(rgbValue & 0x0000FF)/255.0
                                        alpha:1.0];
+    } else if ([bgColor hasPrefix:@"rgba"]) {
+      // Parse rgba(r,g,b,a)
+      NSString *inner = [bgColor stringByReplacingOccurrencesOfString:@"rgba(" withString:@""];
+      inner = [inner stringByReplacingOccurrencesOfString:@")" withString:@""];
+      NSArray *parts = [inner componentsSeparatedByString:@","];
+      if (parts.count >= 4) {
+        captionBgColor = [UIColor colorWithRed:[parts[0] floatValue]/255.0
+                                         green:[parts[1] floatValue]/255.0
+                                          blue:[parts[2] floatValue]/255.0
+                                         alpha:[parts[3] floatValue]];
+      }
     }
     
     CGFloat fontSize = outputSize.width / 18.0;
