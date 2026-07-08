@@ -82,8 +82,8 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       CABasicAnimation *showAnim = [CABasicAnimation animationWithKeyPath:@"opacity"];
       showAnim.fromValue = @1;
       showAnim.toValue = @1;
-      showAnim.beginTime = start;
-      showAnim.duration = end - start;
+      showAnim.beginTime = start == 0 ? 0.001 : start;
+      showAnim.duration = MAX(0.1, end - start);
       showAnim.fillMode = kCAFillModeForwards;
       showAnim.removedOnCompletion = NO;
       
