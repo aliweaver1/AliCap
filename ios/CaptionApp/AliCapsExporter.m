@@ -152,6 +152,27 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     NSString *outPath = [NSTemporaryDirectory() stringByAppendingPathComponent:[NSString stringWithFormat:@"alicaps_%ld.mp4", (long)[[NSDate date] timeIntervalSince1970]]];
     NSURL *outURL = [NSURL fileURLWithPath:outPath];
     
+    // High quality export with custom bitrate
+    NSInteger targetBitrate = [resolution isEqualToString:@"4K"] ? 40000000 : 10000000; // 40Mbps for 4K, 10Mbps for 1080p
+    
+    NSDictionary *videoSettings = @{
+      AVVideoCodecKey: AVVideoCodecTypeH264,
+      AVVideoWidthKey: @(outputSize.width),
+      AVVideoHeightKey: @(outputSize.height),
+      AVVideoCompressionPropertiesKey: @{
+        AVVideoAverageBitRateKey: @(targetBitrate),
+        AVVideoProfileLevelKey: AVVideoProfileLevelH264HighAutoLevel,
+        AVVideoMaxKeyFrameIntervalKey: @([fps intValue]),
+      }
+    };
+    
+    NSDictionary *audioSettings = @{
+      AVFormatIDKey: @(kAudioFormatMPEG4AAC),
+      AVSampleRateKey: @44100,
+      AVNumberOfChannelsKey: @2,
+      AVEncoderBitRateKey: @192000,
+    };
+    
     AVAssetExportSession *exp = [[AVAssetExportSession alloc] initWithAsset:composition presetName:AVAssetExportPresetHighestQuality];
     exp.outputURL = outURL;
     exp.outputFileType = AVFileTypeMPEG4;
