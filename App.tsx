@@ -127,11 +127,13 @@ function AppContent() {
         fontSize: captionStyle.fontSize,
         bgColor: captionStyle.bgColor,
         fontWeight: '800',
+        position: captionStyle.position || 'bottom',
       } : {
         color: currentStyle.color,
         fontSize: currentStyle.fs,
         bgColor: currentStyle.bg,
         fontWeight: currentStyle.fw,
+        position: 'bottom',
       };
       await exporter.exportVideo(cleanPath, captions, resolution, fps, styleInfo);
       Alert.alert('Done!', 'Video saved to Camera Roll!');

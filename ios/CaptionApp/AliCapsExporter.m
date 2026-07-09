@@ -57,6 +57,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
 
     // Parse style info
     NSString *textColor = styleInfo[@"color"] ?: @"#FFFFFF";
+    NSString *position = styleInfo[@"position"] ?: @"bottom";
     NSString *bgColor = styleInfo[@"bgColor"] ?: @"rgba(0,0,0,0.8)";
     
     // Convert hex color to UIColor
@@ -96,10 +97,17 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       }
     }
     
-    CGFloat fontSize = outputSize.width / 18.0;
+    CGFloat fontSize = styleInfo[@"fontSize"] ? [styleInfo[@"fontSize"] floatValue] * (outputSize.width / 390.0) : outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
     CGFloat h = outputSize.height * 0.10;
-    CGFloat y = outputSize.height * 0.05;
+    CGFloat y;
+    if ([position isEqualToString:@"top"]) {
+      y = outputSize.height * 0.85;
+    } else if ([position isEqualToString:@"middle"]) {
+      y = outputSize.height * 0.45;
+    } else {
+      y = outputSize.height * 0.05;
+    }
 
     for (NSDictionary *cap in captions) {
       NSString *text = cap[@"text"];
