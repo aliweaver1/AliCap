@@ -62,6 +62,26 @@ export default function CaptionEditor({ visible, words, onClose, onSave }: Props
   const [editText, setEditText] = useState("");
   const [activeTab, setActiveTab] = useState<"captions" | "style">("captions");
 
+  const regenerateGroups = (lineCount: 1 | 2 | 3) => {
+    if (words.length === 0) return;
+    const wordsPerGroup = lineCount === 1 ? 3 : lineCount === 2 ? 5 : 8;
+    const newGroups: CaptionGroup[] = [];
+    let i = 0;
+    let id = 0;
+    while (i < words.length) {
+      const chunk = words.slice(i, i + wordsPerGroup);
+      newGroups.push({
+        id: id++,
+        words: chunk,
+        text: chunk.map((w) => w.punctuated_word || w.word).join(" "),
+        start: chunk[0].start,
+        end: chunk[chunk.length - 1].end,
+      });
+      i += wordsPerGroup;
+    }
+    setGroups(newGroups);
+  };
+
   useEffect(() => {
     if (words.length > 0) {
       const wordsPerGroup = settings.lines === 1 ? 3 : settings.lines === 2 ? 5 : 8;
@@ -169,7 +189,7 @@ export default function CaptionEditor({ visible, words, onClose, onSave }: Props
             <Text style={s.sectionLabel}>Lines per Caption</Text>
             <View style={s.optRow}>
               {([1, 2, 3] as const).map((l) => (
-                <TouchableOpacity key={l} style={[s.optBtn, settings.lines === l && s.optBtnActive]} onPress={() => setSettings((st) => ({ ...st, lines: l }))}>
+                <TouchableOpacity key={l} style={[s.optBtn, settings.lines === l && s.optBtnActive]} onPress={() => { setSettings((st) => ({ ...st, lines: l })); regenerateGroups(l); }}>
                   <Text style={[s.optTxt, settings.lines === l && s.optTxtActive]}>{l} Line{l > 1 ? "s" : ""}</Text>
                 </TouchableOpacity>
               ))}
