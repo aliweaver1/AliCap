@@ -122,7 +122,12 @@ function AppContent() {
           });
         }
       }
-      const styleInfo = {
+      const styleInfo = captionStyle ? {
+        color: captionStyle.color,
+        fontSize: captionStyle.fontSize,
+        bgColor: captionStyle.bgColor,
+        fontWeight: '800',
+      } : {
         color: currentStyle.color,
         fontSize: currentStyle.fs,
         bgColor: currentStyle.bg,
