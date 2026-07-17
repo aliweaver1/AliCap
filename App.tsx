@@ -128,6 +128,7 @@ function AppContent() {
         bgColor: captionStyle.bgColor,
         fontWeight: '800',
         position: captionStyle.position || 'bottom',
+        lines: captionStyle.lines || 2,
       } : {
         color: currentStyle.color,
         fontSize: currentStyle.fs,
