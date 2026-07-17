@@ -58,6 +58,7 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     // Parse style info
     NSString *textColor = styleInfo[@"color"] ?: @"#FFFFFF";
     NSString *position = styleInfo[@"position"] ?: @"bottom";
+    NSInteger lines = styleInfo[@"lines"] ? [styleInfo[@"lines"] integerValue] : 2;
     NSString *bgColor = styleInfo[@"bgColor"] ?: @"rgba(0,0,0,0.8)";
     
     // Convert hex color to UIColor
@@ -99,7 +100,8 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     
     CGFloat fontSize = styleInfo[@"fontSize"] ? [styleInfo[@"fontSize"] floatValue] * (outputSize.width / 390.0) : outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
-    CGFloat h = outputSize.height * 0.10;
+    CGFloat lineHeight = fontSize * 1.4;
+    CGFloat h = lineHeight * lines + 20;
     CGFloat y;
     if ([position isEqualToString:@"top"]) {
       y = outputSize.height * 0.85;
