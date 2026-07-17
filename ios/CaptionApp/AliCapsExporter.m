@@ -100,8 +100,8 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     
     CGFloat fontSize = styleInfo[@"fontSize"] ? [styleInfo[@"fontSize"] floatValue] * (outputSize.width / 390.0) : outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
-    CGFloat lineHeight = fontSize * 1.4;
-    CGFloat h = lineHeight * lines + 20;
+    CGFloat lineHeight = fontSize * 1.6;
+    CGFloat h = lineHeight * (CGFloat)lines + 40;
     CGFloat y;
     if ([position isEqualToString:@"top"]) {
       y = outputSize.height * 0.85;
