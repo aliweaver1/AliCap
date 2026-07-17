@@ -123,7 +123,12 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
       tl.fontSize = fontSize;
       tl.foregroundColor = captionTextColor.CGColor;
       tl.alignmentMode = kCAAlignmentCenter;
-      tl.wrapped = YES;
+      if (lines == 1) {
+        tl.wrapped = NO;
+        tl.truncationMode = kCATruncationEnd;
+      } else {
+        tl.wrapped = YES;
+      }
       tl.contentsScale = 2.0;
       tl.backgroundColor = captionBgColor.CGColor;
       tl.cornerRadius = 8;
