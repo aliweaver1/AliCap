@@ -100,6 +100,12 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     
     CGFloat fontSize = styleInfo[@"fontSize"] ? [styleInfo[@"fontSize"] floatValue] * (outputSize.width / 390.0) : outputSize.width / 18.0;
     CGFloat w = outputSize.width * 0.88;
+    // Adjust font size based on lines to ensure proper wrapping
+    if (lines == 3) {
+      fontSize = fontSize * 0.75; // Smaller font for 3 lines
+    } else if (lines == 2) {
+      fontSize = fontSize * 0.9;
+    }
     CGFloat lineHeight = fontSize * 1.6;
     CGFloat h = lineHeight * (CGFloat)lines + 40;
     CGFloat y;
