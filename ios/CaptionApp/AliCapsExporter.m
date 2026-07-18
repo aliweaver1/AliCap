@@ -102,9 +102,9 @@ RCT_EXPORT_METHOD(exportVideo:(NSString *)videoPath
     CGFloat w = outputSize.width * 0.88;
     // Adjust font size based on lines to ensure proper wrapping
     if (lines == 3) {
-      fontSize = fontSize * 0.75; // Smaller font for 3 lines
+      fontSize = fontSize * 2.2; // Bigger font for 3 lines wrapping
     } else if (lines == 2) {
-      fontSize = fontSize * 0.9;
+      fontSize = fontSize * 1.0;
     }
     CGFloat lineHeight = fontSize * 1.6;
     CGFloat h = lineHeight * (CGFloat)lines + 40;
