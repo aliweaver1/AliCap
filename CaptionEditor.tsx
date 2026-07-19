@@ -64,7 +64,7 @@ export default function CaptionEditor({ visible, words, onClose, onSave }: Props
 
   const regenerateGroups = (lineCount: 1 | 2 | 3) => {
     if (words.length === 0) return;
-    const wordsPerGroup = lineCount === 1 ? 3 : lineCount === 2 ? 6 : 10;
+    const wordsPerGroup = lineCount === 1 ? 3 : 7;
     const newGroups: CaptionGroup[] = [];
     let i = 0;
     let id = 0;
@@ -84,7 +84,7 @@ export default function CaptionEditor({ visible, words, onClose, onSave }: Props
 
   useEffect(() => {
     if (words.length > 0) {
-      const wordsPerGroup = settings.lines === 1 ? 3 : settings.lines === 2 ? 6 : 10;
+      const wordsPerGroup = settings.lines === 1 ? 3 : 7;
       const newGroups: CaptionGroup[] = [];
       let i = 0;
       let id = 0;
