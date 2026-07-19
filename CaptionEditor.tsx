@@ -188,7 +188,7 @@ export default function CaptionEditor({ visible, words, onClose, onSave }: Props
             {/* Lines */}
             <Text style={s.sectionLabel}>Lines per Caption</Text>
             <View style={s.optRow}>
-              {([1, 2, 3] as const).map((l) => (
+              {([1, 2] as const).map((l) => (
                 <TouchableOpacity key={l} style={[s.optBtn, settings.lines === l && s.optBtnActive]} onPress={() => { setSettings((st) => ({ ...st, lines: l })); regenerateGroups(l); }}>
                   <Text style={[s.optTxt, settings.lines === l && s.optTxtActive]}>{l} Line{l > 1 ? "s" : ""}</Text>
                 </TouchableOpacity>
