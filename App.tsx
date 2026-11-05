@@ -82,14 +82,14 @@ function AppContent() {
       setCaptionText(j?.results?.channels?.[0]?.alternatives?.[0]?.transcript || '');
       setWords(j?.results?.channels?.[0]?.alternatives?.[0]?.words || []);
     } catch (e: any) {
-      setErr('Could not generate captions. You can type them manually.');
+      setErr('Could not generate captions (' + String(e?.message || e) + '). You can type them manually.');
     } finally { setLoading(false); }
   };
 
   const pickVideo = () => {
-    ImagePicker.openPicker({ mediaType: 'video' })
+    ImagePicker.openPicker({ mediaType: 'video', compressVideoPreset: 'Passthrough' })
       .then((v: any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
-      .catch((e: any) => { console.log(e); });
+      .catch((e: any) => { if (e?.code !== 'E_PICKER_CANCELLED') { Alert.alert('Could not open video', String(e?.message || e)); } });
   };
 
   const exportVideo = async () => {
