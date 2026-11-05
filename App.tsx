@@ -3,7 +3,7 @@
  * @format
  */
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   StatusBar, StyleSheet, useColorScheme, View, Text, TextInput,
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
@@ -60,11 +60,30 @@ function AppContent() {
 
   const currentStyle = STYLES.find(s => s.id === styleId) || STYLES[0];
 
+  // Group words into the same 2-second caption windows used by export
+  const groups = useMemo(() => {
+    const out: { text: string; start: number; end: number }[] = [];
+    let i = 0;
+    while (i < words.length) {
+      const windowEnd = words[i].start + 2.0;
+      const chunk: W[] = [];
+      while (i < words.length && words[i].start < windowEnd) { chunk.push(words[i]); i++; }
+      out.push({
+        text: chunk.map((w: W) => w.punctuated_word || w.word).join(' '),
+        start: chunk[0].start,
+        end: chunk[chunk.length - 1].end,
+      });
+    }
+    return out;
+  }, [words]);
+
   const onProgress = (d: any) => {
-    if (words.length === 0) return;
+    if (groups.length === 0) return;
     const t = d.currentTime;
-    const visible = words.filter((w: W) => w.start >= t - 0.1 && w.start <= t + 2.5);
-    setCap(visible.map((w: W) => w.punctuated_word || w.word).join(' '));
+    // Show a caption only while its words are being spoken (small hold after the last word)
+    const g = groups.find(x => t >= x.start - 0.05 && t <= x.end + 0.3);
+    const next = g ? g.text : '';
+    setCap(prev => (prev === next ? prev : next));
   };
 
   const transcribe = async (path: string) => {
@@ -161,7 +180,7 @@ function AppContent() {
           {videoPath ? (
             <View style={styles.previewContainer}>
               <View style={styles.videoWrapper}>
-                <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} onProgress={onProgress} />
+                <Video source={{ uri: videoPath }} style={styles.videoPreview} controls={true} resizeMode="contain" repeat={true} onProgress={onProgress} progressUpdateInterval={100} />
                 {cap.length > 0 && (
                   <View style={styles.capOverlay} pointerEvents="none">
                     <View style={{ backgroundColor: currentStyle.bg, borderRadius: currentStyle.br, paddingHorizontal: 14, paddingVertical: 8, maxWidth: '90%' }}>
