@@ -52,7 +52,7 @@ jobs:
           ls -la CaptionApp.ipa
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v6
         with:
           name: CaptionApp-ipa
           path: ios/build/Build/Products/Release-iphoneos/CaptionApp.ipa
