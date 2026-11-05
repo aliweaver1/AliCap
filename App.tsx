@@ -9,7 +9,7 @@ import {
   TouchableOpacity, SafeAreaView, ScrollView, KeyboardAvoidingView,
   Platform, ActivityIndicator, Alert, Modal,
 } from 'react-native';
-import ImagePicker from 'react-native-image-crop-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import Video from 'react-native-video';
 import CaptionEditor from './CaptionEditor';
 
@@ -86,10 +86,20 @@ function AppContent() {
     } finally { setLoading(false); }
   };
 
-  const pickVideo = () => {
-    ImagePicker.openPicker({ mediaType: 'video', compressVideoPreset: 'Passthrough' })
-      .then((v: any) => { setVideoPath(v.path); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(v.path); })
-      .catch((e: any) => { if (e?.code !== 'E_PICKER_CANCELLED') { Alert.alert('Could not open video', String(e?.message || e)); } });
+  const pickVideo = async () => {
+    try {
+      const res = await launchImageLibrary({ mediaType: 'video', selectionLimit: 1, assetRepresentationMode: 'current' });
+      if (res.didCancel) return;
+      if (res.errorCode) {
+        Alert.alert('Could not open video', (res.errorMessage || res.errorCode) + '');
+        return;
+      }
+      const uri = res.assets?.[0]?.uri;
+      if (!uri) { Alert.alert('Could not open video', 'No video was returned. Please try another video.'); return; }
+      setVideoPath(uri); setShowEdit(false); setCaptionText(''); setWords([]); setCap(''); transcribe(uri);
+    } catch (e: any) {
+      Alert.alert('Could not open video', String(e?.message || e));
+    }
   };
 
   const exportVideo = async () => {
